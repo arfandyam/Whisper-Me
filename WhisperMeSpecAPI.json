@@ -1,0 +1,1100 @@
+{
+    "openapi" : "3.0.0",
+    "info" : {
+      "description" : "This is a sample Petstore server.  You can find\nout more about Swagger at\n[http://swagger.io](http://swagger.io) or on\n[irc.freenode.net, #swagger](http://swagger.io/irc/).\n",
+      "version" : "1.0.0",
+      "title" : "WhisperMe API Backend"
+    },
+    "tags" : [ {
+      "name" : "question",
+      "description" : "Question Endpoints",
+      "externalDocs" : {
+        "description" : "Find out more",
+        "url" : "http://swagger.io"
+      }
+    }, {
+      "name" : "store",
+      "description" : "Access to Petstore orders"
+    }, {
+      "name" : "user",
+      "description" : "Operations about user",
+      "externalDocs" : {
+        "description" : "Find out more about our store",
+        "url" : "http://swagger.io"
+      }
+    } ],
+    "paths" : {
+      "/question" : {
+        "post" : {
+          "tags" : [ "question" ],
+          "summary" : "Add a new question",
+          "operationId" : "addQuestion",
+          "responses" : {
+            "201" : {
+              "description" : "successfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            }
+          },
+          "requestBody" : {
+            "$ref" : "#/components/requestBodies/Question"
+          }
+        }
+      },
+      "/question/{questionId}" : {
+        "get" : {
+          "tags" : [ "question" ],
+          "summary" : "Find Question by Id",
+          "description" : "Returns a single question",
+          "operationId" : "getQuestionById",
+          "parameters" : [ {
+            "name" : "questionId",
+            "in" : "path",
+            "description" : "ID of question to return",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "successful operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "type" : "object",
+                    "properties" : {
+                      "status" : {
+                        "type" : "string",
+                        "example" : "success"
+                      },
+                      "data" : {
+                        "$ref" : "#/components/schemas/Question"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            },
+            "404" : {
+              "description" : "Pet not found",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "security" : [ {
+            "api_key" : [ ]
+          } ]
+        },
+        "put" : {
+          "tags" : [ "question" ],
+          "summary" : "Update specific question",
+          "operationId" : "updateQuestion",
+          "parameters" : [ {
+            "name" : "questionId",
+            "in" : "path",
+            "description" : "ID of question to return",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "succesfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            },
+            "404" : {
+              "description" : "Question not found",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "security" : [ {
+            "petstore_auth" : [ "write:pets", "read:pets" ]
+          } ],
+          "requestBody" : {
+            "$ref" : "#/components/requestBodies/Question"
+          }
+        },
+        "delete" : {
+          "tags" : [ "question" ],
+          "summary" : "Delete a question",
+          "operationId" : "deleteQuestion",
+          "parameters" : [ {
+            "name" : "accessToken",
+            "in" : "header",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "byte"
+            }
+          }, {
+            "name" : "questionId",
+            "in" : "path",
+            "description" : "Question id to delete",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "succesfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            },
+            "404" : {
+              "description" : "Question not found",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "security" : [ {
+            "petstore_auth" : [ "write:pets", "read:pets" ]
+          } ]
+        }
+      },
+      "/{questionId}/response" : {
+        "post" : {
+          "tags" : [ "store" ],
+          "summary" : "Anonymous user give response to a question",
+          "operationId" : "addResponse",
+          "parameters" : [ {
+            "name" : "questionId",
+            "in" : "path",
+            "required" : true,
+            "description" : "questionId to add its response",
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "successful operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            },
+            "404" : {
+              "description" : "Question not found",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "security" : [ {
+            "petstore_auth" : [ "write:pets", "read:pets" ]
+          } ],
+          "requestBody" : {
+            "$ref" : "#/components/requestBodies/Response"
+          }
+        },
+        "get" : {
+          "tags" : [ "store" ],
+          "summary" : "Find all response that correspond to questionId",
+          "description" : "Returns array of object responses",
+          "operationId" : "getResponsesByQuestionId",
+          "parameters" : [ {
+            "name" : "questionId",
+            "in" : "path",
+            "required" : true,
+            "description" : "questionId to find its responses",
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "succesfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "type" : "object",
+                    "properties" : {
+                      "status" : {
+                        "type" : "string",
+                        "example" : "success"
+                      },
+                      "data" : {
+                        "type" : "array",
+                        "items" : {
+                          "$ref" : "#/components/schemas/Response"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            },
+            "404" : {
+              "description" : "Question not found",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "security" : [ {
+            "petstore_auth" : [ "write:pets", "read:pets" ]
+          } ]
+        }
+      },
+      "/user" : {
+        "post" : {
+          "tags" : [ "user" ],
+          "summary" : "Create user",
+          "description" : "This is use for user registration by email.",
+          "operationId" : "createUser",
+          "responses" : {
+            "200" : {
+              "description" : "successful operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            }
+          },
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AddUser"
+                }
+              }
+            },
+            "description" : "Created user object",
+            "required" : true
+          }
+        }
+      },
+      "/user/oauth/google" : {
+        "get" : {
+          "tags" : [ "user" ],
+          "summary" : "Redirect to login with google account",
+          "operationId" : "oauthGoogleRegistration",
+          "responses" : {
+            "302" : {
+              "description" : "Redirect to gmail"
+            }
+          }
+        }
+      },
+      "/user/oauth/google/callback" : {
+        "get" : {
+          "tags" : [ "user" ],
+          "summary" : "google callback for login",
+          "operationId" : "oauthGoogleCallback",
+          "responses" : {
+            "200" : {
+              "description" : "successfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "type" : "object",
+                    "properties" : {
+                      "status" : {
+                        "type" : "string",
+                        "example" : "success"
+                      },
+                      "data" : {
+                        "type" : "object",
+                        "$ref" : "#/components/schemas/GetUserDTO"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "201" : {
+              "description" : "user created if there are no matches email in db",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CreateOperation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/login" : {
+        "post" : {
+          "tags" : [ "user" ],
+          "summary" : "Login user using email and password",
+          "operationId" : "loginUser",
+          "responses" : {
+            "200" : {
+              "description" : "successful operation",
+              "headers" : {
+                "X-Rate-Limit" : {
+                  "description" : "calls per hour allowed by the user",
+                  "schema" : {
+                    "type" : "integer",
+                    "format" : "int32"
+                  }
+                },
+                "X-Expires-After" : {
+                  "description" : "date in UTC when token expires",
+                  "schema" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  }
+                }
+              },
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/Token"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/Token"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "Invalid username/password supplied"
+            }
+          }
+        }
+      },
+      "/user/logout/{userId}" : {
+        "delete" : {
+          "tags" : [ "user" ],
+          "summary" : "Logs out current logged in user session",
+          "operationId" : "logoutUser",
+          "parameters" : [ {
+            "name" : "userId",
+            "in" : "path",
+            "description" : "user id that requested to log out",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "successful operation"
+            }
+          }
+        }
+      },
+      "/user/{userId}" : {
+        "get" : {
+          "tags" : [ "user" ],
+          "summary" : "Get user by user id",
+          "operationId" : "getUserById",
+          "parameters" : [ {
+            "name" : "userId",
+            "in" : "path",
+            "description" : "user Id that needs to be fetched. Use user1 for testing.",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "successful operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/GetUserDTO"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/GetUserDTO"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "Invalid username supplied"
+            },
+            "404" : {
+              "description" : "User not found"
+            }
+          }
+        },
+        "put" : {
+          "tags" : [ "user" ],
+          "summary" : "Updated user",
+          "description" : "This can only be done by the logged in user.",
+          "operationId" : "updateUser",
+          "parameters" : [ {
+            "name" : "userId",
+            "in" : "path",
+            "description" : "user Id that need to be updated",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }, {
+            "name" : "refreshToken",
+            "in" : "header",
+            "description" : "token to validate logged in user",
+            "schema" : {
+              "type" : "string",
+              "format" : "byte"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "successfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "Invalid user supplied"
+            },
+            "404" : {
+              "description" : "User not found",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UpdateUserDTO"
+                }
+              }
+            },
+            "description" : "Updated user object",
+            "required" : true
+          }
+        }
+      },
+      "/user/password" : {
+        "put" : {
+          "tags" : [ "user" ],
+          "summary" : "change password",
+          "description" : "can only be accesed by logged in user",
+          "operationId" : "deleteUser",
+          "responses" : {
+            "200" : {
+              "description" : "successfull operation",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                },
+                "application/xml" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SuccessOperation"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "ClientError"
+            }
+          },
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Password"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "externalDocs" : {
+      "description" : "Find out more about Swagger",
+      "url" : "http://swagger.io"
+    },
+    "components" : {
+      "schemas" : {
+        "CreateOperation" : {
+          "type" : "object",
+          "properties" : {
+            "status" : {
+              "type" : "string",
+              "example" : "success"
+            },
+            "message" : {
+              "type" : "string",
+              "example" : "Berhasil menambahkan data."
+            },
+            "data" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                }
+              }
+            }
+          },
+          "xml" : {
+            "name" : "CreateOperation"
+          }
+        },
+        "SuccessOperation" : {
+          "type" : "object",
+          "properties" : {
+            "status" : {
+              "type" : "string",
+              "example" : "success"
+            },
+            "message" : {
+              "type" : "string",
+              "example" : "Berhasil melakukan operasi data."
+            }
+          },
+          "xml" : {
+            "name" : "SuccessOperation"
+          }
+        },
+        "NotFound" : {
+          "type" : "object",
+          "properties" : {
+            "status" : {
+              "type" : "string",
+              "example" : "failed"
+            },
+            "message" : {
+              "type" : "string",
+              "example" : "Data tidak ditemukan."
+            }
+          },
+          "xml" : {
+            "name" : "NotFound"
+          }
+        },
+        "Order" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "petId" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "quantity" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "shipDate" : {
+              "type" : "string",
+              "format" : "date-time"
+            },
+            "status" : {
+              "type" : "string",
+              "description" : "Order Status",
+              "enum" : [ "placed", "approved", "delivered" ]
+            },
+            "complete" : {
+              "type" : "boolean",
+              "default" : false
+            }
+          },
+          "xml" : {
+            "name" : "Order"
+          }
+        },
+        "Category" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "name" : {
+              "type" : "string"
+            }
+          },
+          "xml" : {
+            "name" : "Category"
+          }
+        },
+        "AddUser" : {
+          "type" : "object",
+          "properties" : {
+            "username" : {
+              "type" : "string",
+              "example" : "rfun"
+            },
+            "firstName" : {
+              "type" : "string",
+              "example" : "Arfandy"
+            },
+            "lastName" : {
+              "type" : "string",
+              "example" : "Adimurfiq"
+            },
+            "email" : {
+              "type" : "string",
+              "example" : "arfandy888@gmail.com"
+            },
+            "password" : {
+              "type" : "string",
+              "example" : "5f4dcc3b5aa765d61d8327deb882cf99"
+            }
+          }
+        },
+        "User" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "username" : {
+              "type" : "string",
+              "example" : "rfun"
+            },
+            "firstName" : {
+              "type" : "string",
+              "example" : "Arfandy"
+            },
+            "lastName" : {
+              "type" : "string",
+              "example" : "Adimurfiq"
+            },
+            "email" : {
+              "type" : "string",
+              "example" : "arfandy888@gmail.com"
+            },
+            "password" : {
+              "type" : "string",
+              "example" : "5f4dcc3b5aa765d61d8327deb882cf99"
+            },
+            "oauth_id" : {
+              "type" : "string",
+              "example" : "google|54369"
+            },
+            "is_oauth" : {
+              "type" : "boolean"
+            },
+            "is_verified" : {
+              "type" : "boolean"
+            }
+          },
+          "xml" : {
+            "name" : "User"
+          }
+        },
+        "GetUserDTO" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "username" : {
+              "type" : "string",
+              "example" : "rfun"
+            },
+            "firstName" : {
+              "type" : "string",
+              "example" : "Arfandy"
+            },
+            "lastName" : {
+              "type" : "string",
+              "example" : "Adimurfiq"
+            },
+            "email" : {
+              "type" : "string",
+              "example" : "arfandy888@gmail.com"
+            },
+            "oauth_id" : {
+              "type" : "string",
+              "example" : "google|54369"
+            },
+            "is_oauth" : {
+              "type" : "boolean"
+            },
+            "is_verified" : {
+              "type" : "boolean"
+            },
+            "accessToken" : {
+              "type" : "string",
+              "format" : "byte"
+            },
+            "refreshToken" : {
+              "type" : "string",
+              "format" : "byte"
+            }
+          }
+        },
+        "UpdateUserDTO" : {
+          "type" : "object",
+          "properties" : {
+            "username" : {
+              "type" : "string",
+              "example" : "rfun"
+            },
+            "firstName" : {
+              "type" : "string",
+              "example" : "Arfandy"
+            },
+            "lastName" : {
+              "type" : "string",
+              "example" : "Adimurfiq"
+            },
+            "email" : {
+              "type" : "string",
+              "example" : "arfandy888@gmail.com"
+            }
+          }
+        },
+        "Tag" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "name" : {
+              "type" : "string"
+            }
+          },
+          "xml" : {
+            "name" : "Tag"
+          }
+        },
+        "Response" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "slug" : {
+              "type" : "string",
+              "example" : "It's-fake-2c963f66afa6"
+            },
+            "response" : {
+              "type" : "string",
+              "example" : "It's fake"
+            }
+          },
+          "xml" : {
+            "name" : "Response"
+          }
+        },
+        "AddQuestion" : {
+          "type" : "object",
+          "required" : [ "question" ],
+          "properties" : {
+            "question" : {
+              "type" : "string",
+              "example" : "What do you think about flat earth?"
+            }
+          },
+          "xml" : {
+            "name" : "Question"
+          }
+        },
+        "AddResponse" : {
+          "type" : "object",
+          "required" : [ "response" ],
+          "properties" : {
+            "response" : {
+              "type" : "string",
+              "example" : "It's fake"
+            }
+          },
+          "xml" : {
+            "name" : "Question"
+          }
+        },
+        "Question" : {
+          "type" : "object",
+          "required" : [ "question" ],
+          "properties" : {
+            "id" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "slug" : {
+              "type" : "string",
+              "example" : "what-do-you-think-about-flat-earth?-2c963f66afa6"
+            },
+            "question" : {
+              "type" : "string",
+              "example" : "What do you think about flat earth?"
+            }
+          },
+          "xml" : {
+            "name" : "Question"
+          }
+        },
+        "Token" : {
+          "type" : "object",
+          "properties" : {
+            "accessToken" : {
+              "type" : "string",
+              "format" : "byte"
+            },
+            "refreshToken" : {
+              "type" : "string",
+              "format" : "byte"
+            }
+          },
+          "xml" : {
+            "name" : "Token"
+          }
+        },
+        "Password" : {
+          "type" : "object",
+          "properties" : {
+            "oldPassword" : {
+              "type" : "string"
+            },
+            "newPassword" : {
+              "type" : "string"
+            }
+          }
+        },
+        "ApiResponse" : {
+          "type" : "object",
+          "properties" : {
+            "code" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "type" : {
+              "type" : "string"
+            },
+            "message" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "requestBodies" : {
+        "Question" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddQuestion"
+              }
+            },
+            "application/xml" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddQuestion"
+              }
+            }
+          },
+          "description" : "Question object that came from client",
+          "required" : true
+        },
+        "Response" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddResponse"
+              }
+            },
+            "application/xml" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddResponse"
+              }
+            }
+          },
+          "description" : "Response object that came from client",
+          "required" : true
+        },
+        "UserArray" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "description" : "List of user object",
+          "required" : true
+        }
+      },
+      "securitySchemes" : {
+        "petstore_auth" : {
+          "type" : "oauth2",
+          "flows" : {
+            "implicit" : {
+              "authorizationUrl" : "http://petstore.swagger.io/oauth/dialog",
+              "scopes" : {
+                "write:pets" : "modify pets in your account",
+                "read:pets" : "read your pets"
+              }
+            }
+          }
+        },
+        "api_key" : {
+          "type" : "apiKey",
+          "name" : "api_key",
+          "in" : "header"
+        }
+      }
+    },
+    "servers" : [ {
+      "description" : "SwaggerHub API Auto Mocking",
+      "url" : "https://virtserver.swaggerhub.com/ARFANDIADIMURFIQ/WhisperMe/1.0.0"
+    } ]
+}
