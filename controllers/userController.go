@@ -1,10 +1,12 @@
 package controllers
 
 import (
-	"github.com/arfandyam/Whisper-Me/models/web"
+	"net/http"
+
+	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"github.com/google/uuid"
 )
 
 type UserController struct {
@@ -18,17 +20,34 @@ func NewUserController(userService service.UserServiceInterface) UserControllerI
 }
 
 func (controller *UserController) CreateUser(ctx *gin.Context) {
-	userReq := &web.UserCreateRequest{}
+	userReq := &dto.UserCreateRequest{}
 	// fmt.Println("req.body", ctx.ShouldBindBodyWithJSON(&userReq))
 	userResponse := controller.UserService.CreateUser(ctx, userReq)
-
-	if userResponse.Id == nil {
+	if userResponse == nil {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"message": "Berhasil menambahkan data.",
-		"data":    userResponse.Id,
-	})
+	userResponse.Response = &dto.Response{
+		Status:  "success",
+		Message: "Berhasil Menambahkan Data.",
+	}
+
+	ctx.JSON(http.StatusCreated, userResponse)
+}
+
+func (controller *UserController) EditUser(ctx *gin.Context){
+	userReq := &dto.UserEditRequest{}
+	userId := uuid.Must(uuid.Parse(ctx.Param("id")))
+
+	userResponse := controller.UserService.EditUser(ctx, userReq, userId)
+	if userResponse == nil {
+		return
+	}
+
+	userResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil memperbarui data",
+	}
+
+	ctx.JSON(http.StatusOK, userResponse)
 }
