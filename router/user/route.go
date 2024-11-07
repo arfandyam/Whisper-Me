@@ -10,5 +10,6 @@ func UserRoutes(route *gin.Engine, userController controllers.UserControllerInte
 	{
 		// Create User
 		user.POST("", userController.CreateUser)
+		user.PUT("/:id", userController.EditUser)
 	}
 }
