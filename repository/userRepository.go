@@ -39,13 +39,15 @@ func (repository *UserRepository) EditUser(tx *gorm.DB, user *domain.User) (*dom
 	return user, nil
 }
 
-func (repository *UserRepository) FindUserById(tx *gorm.DB, userId uuid.UUID) (*domain.User, error){
+func (repository *UserRepository) FindUserById(db *gorm.DB, userId uuid.UUID) (*domain.User, error){
 	sql := "SELECT * FROM users WHERE id = ?"
 	user := &domain.User{}
 
-	if err := tx.Raw(sql, userId).Scan(&user).Error; err != nil {
+	if err := db.Raw(sql, userId).Scan(&user).Error; err != nil {
+		fmt.Println("oiii")
 		return nil, err
 	}
 
+	fmt.Println("oiii2")
 	return user, nil
 }
