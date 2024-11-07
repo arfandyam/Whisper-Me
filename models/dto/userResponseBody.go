@@ -17,3 +17,12 @@ type UserEditResponse struct {
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
 }
+
+type UserFindByIdResponse struct {
+	*Response
+	Id        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Firstname string    `json:"firstname"`
+	Lastname  string    `json:"lastname"`
+	Email     string    `json:"email"`
+}
