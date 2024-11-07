@@ -2,15 +2,15 @@ package service
 
 import (
 	"fmt"
+	"net/http"
 	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/models/domain"
-	"github.com/arfandyam/Whisper-Me/models/web"
+	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 type UserService struct {
@@ -25,20 +25,13 @@ func NewUserService(userRepository repository.UserRepositoryInterface, DB *gorm.
 	}
 }
 
-func (service *UserService) CreateUser(ctx *gin.Context, request *web.UserCreateRequest) *web.UserCreateResponse {
+func (service *UserService) CreateUser(ctx *gin.Context, request *dto.UserCreateRequest) *dto.UserCreateResponse {
 	// Melakukan validasi berdasarkan UserCreateBody
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
 		ctx.Error(err)
 		return nil
 	}
-
-	tx := service.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
 
 	// Create Id
 	uuid := uuid.New()
@@ -63,18 +56,66 @@ func (service *UserService) CreateUser(ctx *gin.Context, request *web.UserCreate
 		Is_verified: false,
 	}
 
-	fmt.Println("user dari service", user)
-	fmt.Println("user.Password", *user.Password)
+	tx := service.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
 	user, err = service.UserRepository.CreateUser(tx, user)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "User failed to add", err.Error())
 		ctx.Error(err)
+		tx.Rollback()
+		return nil
+	}
+	tx.Commit()
+
+	return &dto.UserCreateResponse{
+		Id: user.Id,
+	}
+}
+
+func (service *UserService) EditUser(ctx *gin.Context, request *dto.UserEditRequest, userId uuid.UUID) *dto.UserEditResponse {
+	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
+		ctx.Error(err)
+		return nil
 	}
 
-	return &web.UserCreateResponse{
-		Status: "success",
-		Message: "Berhasil Menambahkan Data.",
-		Id: &user.Id,
+	tx := service.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	user, err := service.UserRepository.FindUserById(tx, userId)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "User not found", err.Error())
+		ctx.Error(err)
+		tx.Rollback()
+		return nil
+	}
+
+	user.Firstname = request.Firstname
+	user.Lastname = request.Lastname
+
+	fmt.Println("user dari service sebelum edit", user)
+
+	user, err = service.UserRepository.EditUser(tx, user)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "User failed to add", err.Error())
+		ctx.Error(err)
+		tx.Rollback()
+		return nil
+	}
+
+	tx.Commit()
+
+	return &dto.UserEditResponse{
+		Firstname: user.Firstname,
+		Lastname: user.Lastname,
 	}
 }
