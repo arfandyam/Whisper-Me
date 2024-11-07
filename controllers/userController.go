@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
-
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
@@ -35,7 +35,7 @@ func (controller *UserController) CreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, userResponse)
 }
 
-func (controller *UserController) EditUser(ctx *gin.Context){
+func (controller *UserController) EditUser(ctx *gin.Context) {
 	userReq := &dto.UserEditRequest{}
 	userId := uuid.Must(uuid.Parse(ctx.Param("id")))
 
@@ -45,8 +45,26 @@ func (controller *UserController) EditUser(ctx *gin.Context){
 	}
 
 	userResponse.Response = &dto.Response{
-		Status: "success",
+		Status:  "success",
 		Message: "Berhasil memperbarui data",
+	}
+
+	ctx.JSON(http.StatusOK, userResponse)
+}
+
+func (controller *UserController) FindUserById(ctx *gin.Context) {
+	userId := uuid.Must(uuid.Parse(ctx.Param("id")))
+
+	userResponse := controller.UserService.FindUserById(ctx, userId)
+	if userResponse == nil {
+		return
+	}
+
+	fmt.Println("userResponse controller", userResponse)
+
+	userResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil mendapatkan data.",
 	}
 
 	ctx.JSON(http.StatusOK, userResponse)
