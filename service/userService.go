@@ -119,3 +119,32 @@ func (service *UserService) EditUser(ctx *gin.Context, request *dto.UserEditRequ
 		Lastname: user.Lastname,
 	}
 }
+
+func (service *UserService) FindUserById(ctx *gin.Context, userId uuid.UUID) *dto.UserFindByIdResponse {
+	// tx := service.DB.Begin()
+	// defer func(){
+	// 	if r := recover(); r != nil {
+	// 		tx.Rollback()
+	// 	}
+	// }()
+
+	user, err := service.UserRepository.FindUserById(service.DB, userId)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "User not found.", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	fmt.Println("aoekdosnd")
+	fmt.Println("user setelah find", user)
+
+	return &dto.UserFindByIdResponse{
+		Id: user.Id,
+		Username: user.Username,
+		Firstname: user.Firstname,
+		Lastname: user.Lastname,
+		Email: user.Email,
+	}
+
+	// tx.Commit()
+}

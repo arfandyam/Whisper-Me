@@ -9,6 +9,6 @@ import (
 type UserServiceInterface interface {
 	CreateUser(ctx *gin.Context, request *dto.UserCreateRequest) *dto.UserCreateResponse
 	EditUser(ctx *gin.Context, request *dto.UserEditRequest, userId uuid.UUID) *dto.UserEditResponse
-	// FindUserById(ctx *gin.Context, userId uuid.UUID)
+	FindUserById(ctx *gin.Context, userId uuid.UUID) *dto.UserFindByIdResponse
 	// ChangePassword(ctx *gin.Context, request web.UserChangePasswordRequest)
 }
