@@ -9,14 +9,14 @@ import (
 type User struct {
 	gorm.Model
 	Id          uuid.UUID `gorm:primaryKey;notNull`
-	Username    string    `gorm:notNull`
+	Username    string    `gorm:unique;notNull`
 	Firstname   string    `gorm:notNull`
 	Lastname    string    `gorm:notNull`
-	Email       string    `gorm:notNull`
+	Email       string    `gorm:unique;notNull`
 	Password    string
 	Oauth_id    string
-	Is_oauth    bool      `gorm:notNull`
-	Is_verified bool      `gorm:notNull`
+	Is_oauth    bool `gorm:notNull`
+	Is_verified bool `gorm:notNull`
 }
 
 type Question struct {
@@ -33,4 +33,8 @@ type Response struct {
 	Question Question  `gorm:"foreignKey:id";notNull`
 	Slug     string    `gorm:notNull`
 	Response string    `gorm:notNull`
+}
+
+type Authentication struct {
+	Token string `gorm:notNull`
 }
