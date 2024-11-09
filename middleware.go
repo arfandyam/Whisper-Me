@@ -15,6 +15,7 @@ func GlobalErrorHandler() gin.HandlerFunc {
 			case *exceptions.CustomError:
 				ctx.AbortWithStatusJSON(e.Status, gin.H{
 					"status": "failed",
+					"description": e.Description,
 					"message": e.Message,
 				})
 			default:
