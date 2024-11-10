@@ -21,10 +21,20 @@ func (repository *AuthRepository) LoginUser(tx *gorm.DB, token *string) error {
 	return nil
 }
 
-// func (repository *AuthRepository) VerifyRefreshToken(db *gorm.DB, token *string) error {
-// 	sql := "SELECT token FROM authentications WHERE token = ?"
+func (repository *AuthRepository) VerifyRefreshToken(db *gorm.DB, token *string) error {
+	sql := "SELECT token FROM authentications WHERE token = ?"
 
-// 	if err := db.Raw(sql, token).Scan(&token).Error; err != nil {
+	if err := db.Raw(sql, token).Scan(&token).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// func (repository *AuthRepository) DeleteRefreshToken(tx *gorm.DB, token string) error {
+// 	sql := "DELETE FROM authentications WHERE token = ?"
+
+// 	if err := tx.Raw(sql, token).Error; err != nil {
 // 		return err
 // 	}
 
