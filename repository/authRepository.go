@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -31,12 +33,14 @@ func (repository *AuthRepository) VerifyRefreshToken(db *gorm.DB, token *string)
 	return nil
 }
 
-// func (repository *AuthRepository) DeleteRefreshToken(tx *gorm.DB, token string) error {
-// 	sql := "DELETE FROM authentications WHERE token = ?"
+func (repository *AuthRepository) DeleteRefreshToken(tx *gorm.DB, token string) error {
+	fmt.Println("token dari repo", token)
+	sql := "DELETE FROM authentications WHERE token = ?"
 
-// 	if err := tx.Raw(sql, token).Error; err != nil {
-// 		return err
-// 	}
+	if err := tx.Exec(sql, token).Error; err != nil {
+		fmt.Println("err", err)
+		return err
+	}
 
-// 	return nil
-// }
+	return nil
+}
