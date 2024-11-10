@@ -114,3 +114,29 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 		AccessTokenExp: *exp,
 	}
 }
+
+func (service *AuthService) LogoutUser(ctx *gin.Context, request *dto.RefreshTokenRequestBody) {
+	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
+		ctx.Error(err)
+		return
+	}
+
+	tx := service.DB.Begin()
+	defer func (){
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := service.AuthRepository.DeleteRefreshToken(tx, request.RefreshToken); err != nil {
+		fmt.Println("eaeaeaea")
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to delete refresh token", err.Error())
+		// tx.Rollback()
+		ctx.Error(err)
+		return
+	}
+
+	fmt.Println("bassanggg")
+	tx.Commit()
+}
