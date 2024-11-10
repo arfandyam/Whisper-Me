@@ -1,6 +1,10 @@
 package service
 
 import (
+	"fmt"
+	"net/http"
+	"os"
+	"strconv"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/models/domain"
 	"github.com/arfandyam/Whisper-Me/models/dto"
@@ -8,9 +12,6 @@ import (
 	"github.com/arfandyam/Whisper-Me/tokenize"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"os"
-	"strconv"
 )
 
 type AuthService struct {
@@ -47,8 +48,9 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 		return nil
 	}
 
+	fmt.Println("testtt1")
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
-	accessToken, err := service.TokenManager.GenerateToken(user.Id, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	accessToken, iat, exp, err := service.TokenManager.GenerateToken(user.Id, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to sign jwt", err.Error())
@@ -56,9 +58,11 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 		return nil
 	}
 
+	fmt.Println("testtt2")
 	refreshTokenAge, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_AGE"))
-	refreshToken, err := service.TokenManager.GenerateToken(user.Id, refreshTokenAge, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
+	refreshToken, _, _, err := service.TokenManager.GenerateToken(user.Id, refreshTokenAge, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
 
+	fmt.Println("testtt3")
 	tx := service.DB.Begin()
 	defer func(){
 		if r:=recover(); r != nil {
@@ -75,8 +79,38 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	return &dto.AuthResponseBody{
 		AccessToken:  accessToken,
+		AccessTokenIat: *iat,
+		AccessTokenExp: *exp,
 		RefreshToken: refreshToken,
 	}
 }
 
-// func UpdateAccessToken(ctx *gin.Context)
+func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.RefreshTokenRequestBody) *dto.AccessTokenResponseBody {
+	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	if err := service.AuthRepository.VerifyRefreshToken(service.DB, &request.RefreshToken); err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	userId, err := service.TokenManager.VerifyToken(request.RefreshToken, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
+	accessToken, iat, exp, err := service.TokenManager.GenerateToken(*userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+
+	return &dto.AccessTokenResponseBody{
+		AccessToken: accessToken,
+		AccessTokenIat: *iat,
+		AccessTokenExp: *exp,
+	}
+}
