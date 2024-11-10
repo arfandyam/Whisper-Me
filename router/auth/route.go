@@ -9,5 +9,6 @@ func AuthRoutes(route *gin.Engine, authController controllers.AuthControllerInte
     auth := route.Group("/auth")
     {
         auth.POST("", authController.LoginUser)
+        auth.PUT("", authController.UpdateAccessToken)
     }
 }
