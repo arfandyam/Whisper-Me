@@ -46,3 +46,18 @@ func (controller *AuthController) UpdateAccessToken(ctx *gin.Context){
 
 	ctx.JSON(http.StatusOK, authResponse)
 }
+
+func (controller *AuthController) LogoutUser(ctx *gin.Context){
+	authReq := &dto.RefreshTokenRequestBody{}
+
+	controller.AuthService.LogoutUser(ctx, authReq)
+
+	if len(ctx.Errors) > 0{
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: "success",
+		Message: "Berhasil logout",
+	})
+}
