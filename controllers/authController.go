@@ -34,3 +34,15 @@ func (controller *AuthController) LoginUser(ctx *gin.Context){
 
 	ctx.JSON(http.StatusOK, authResponse)
 }
+
+func (controller *AuthController) UpdateAccessToken(ctx *gin.Context){
+	authReq := &dto.RefreshTokenRequestBody{}
+
+	authResponse := controller.AuthService.UpdateAccessToken(ctx, authReq)
+	
+	if authResponse == nil {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, authResponse)
+}
