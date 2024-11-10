@@ -12,5 +12,6 @@ func UserRoutes(route *gin.Engine, userController controllers.UserControllerInte
 		user.POST("", userController.CreateUser)
 		user.PUT("/:id", userController.EditUser)
 		user.GET("/:id", userController.FindUserById)
+		user.PUT("/password", userController.ChangePassword)
 	}
 }
