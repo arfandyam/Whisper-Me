@@ -10,5 +10,7 @@ type UserRepositoryInterface interface {
 	CreateUser(tx *gorm.DB, user *domain.User) (*domain.User, error)
 	EditUser(tx *gorm.DB, user *domain.User) (*domain.User, error)
 	FindUserById(db *gorm.DB, userId uuid.UUID) (*domain.User, error)
-	// ChangePassword(tx *gorm.DB, user domain.User)
+	ChangeUserPassword(tx *gorm.DB, userId uuid.UUID, password string) error
+	GetUserPassword(db *gorm.DB, userId uuid.UUID) (*string, error)
+	GetUserCredentials(db *gorm.DB, username string) (*domain.User, error)
 }
