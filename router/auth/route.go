@@ -10,5 +10,6 @@ func AuthRoutes(route *gin.Engine, authController controllers.AuthControllerInte
     {
         auth.POST("", authController.LoginUser)
         auth.PUT("", authController.UpdateAccessToken)
+        auth.DELETE("", authController.LogoutUser)
     }
 }
