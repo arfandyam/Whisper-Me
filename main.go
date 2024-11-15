@@ -29,7 +29,7 @@ func main() {
 
 	// User
 	userRepository := repository.NewUserRepository()
-	userService := service.NewUserService(userRepository, db)
+	userService := service.NewUserService(userRepository, tokenManager, db)
 	userController := controllers.NewUserController(userService)
 
 	user.UserRoutes(r, userController)
