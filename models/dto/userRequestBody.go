@@ -5,7 +5,7 @@ type UserCreateRequest struct {
 	Firstname string `validate:"required,min=1,max=100" json:"firstname"`
 	Lastname  string `validate:"required,min=1,max=100" json:"lastname"`
 	Email     string `validate:"required,min=1,max=100" json:"email"`
-	Password  string `validate:"required,min=8,max=100" json:"password"`
+	Password  string `validate:"required,min=8" json:"password"`
 }
 
 type UserEditRequest struct {
@@ -13,7 +13,7 @@ type UserEditRequest struct {
 	Lastname  string `validate:"required,min=1,max=100" json:"lastname"`
 }
 
-// type UserChangePasswordRequest struct {
-// 	Oldpassword string `validate:"required,min=8,max=100" json:oldpassword`
-// 	Newpassword string `validate:"required,min=8,max=100" json:newpassword`
-// }
+type UserChangePasswordRequest struct {
+	Oldpassword string `validate:"required,min=8" json:oldpassword`
+	Newpassword string `validate:"required,min=8" json:newpassword`
+}
