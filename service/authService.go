@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
-	"github.com/arfandyam/Whisper-Me/models/domain"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/repository"
 	"github.com/arfandyam/Whisper-Me/tokenize"
@@ -37,13 +38,15 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 		return nil
 	}
 
-	user := &domain.User{
-		Username: request.Username,
-		Password: &request.Password,
+	user, err := service.UserRepository.GetUserCredentials(service.DB, request.Username)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to get user credentials", err.Error())
+		ctx.Error(err)
+		return nil
 	}
 
-	if err := service.UserRepository.VerifyUserCredentials(service.DB, user); err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Credentials not matched", err.Error())
+	if !libs.CheckPasswordHash(request.Password, *user.Password) {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "credentials not matched", "wrong password")
 		ctx.Error(err)
 		return nil
 	}
@@ -64,8 +67,8 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	fmt.Println("testtt3")
 	tx := service.DB.Begin()
-	defer func(){
-		if r:=recover(); r != nil {
+	defer func() {
+		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
@@ -78,10 +81,10 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 	tx.Commit()
 
 	return &dto.AuthResponseBody{
-		AccessToken:  accessToken,
+		AccessToken:    accessToken,
 		AccessTokenIat: *iat,
 		AccessTokenExp: *exp,
-		RefreshToken: refreshToken,
+		RefreshToken:   refreshToken,
 	}
 }
 
@@ -109,7 +112,7 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 	accessToken, iat, exp, err := service.TokenManager.GenerateToken(*userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 
 	return &dto.AccessTokenResponseBody{
-		AccessToken: accessToken,
+		AccessToken:    accessToken,
 		AccessTokenIat: *iat,
 		AccessTokenExp: *exp,
 	}
@@ -123,7 +126,7 @@ func (service *AuthService) LogoutUser(ctx *gin.Context, request *dto.RefreshTok
 	}
 
 	tx := service.DB.Begin()
-	defer func (){
+	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
