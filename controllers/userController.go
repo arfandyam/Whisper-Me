@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
@@ -68,4 +69,21 @@ func (controller *UserController) FindUserById(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, userResponse)
+}
+
+func (controller *UserController) ChangePassword(ctx *gin.Context){
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+
+	userReq := &dto.UserChangePasswordRequest{}
+	controller.UserService.ChangePassword(ctx, userReq, accessToken)
+
+	if len(ctx.Errors) > 0 {
+		return 
+	}
+
+	ctx.JSON(http.StatusOK, &dto.Response{
+		Status: "success",
+		Message: "Berhasil memperbarui data.",
+	})
+
 }
