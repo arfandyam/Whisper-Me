@@ -39,7 +39,7 @@ func (service *UserService) CreateUser(ctx *gin.Context, request *dto.UserCreate
 	}
 
 	// Create Id
-	uuid := uuid.New()
+	userId := uuid.New()
 
 	// Hashing Password
 	password, err := libs.HashPassword(request.Password)
@@ -50,7 +50,7 @@ func (service *UserService) CreateUser(ctx *gin.Context, request *dto.UserCreate
 	}
 
 	user := &domain.User{
-		Id:          uuid,
+		Id:          userId,
 		Firstname:   request.Firstname,
 		Lastname:    request.Lastname,
 		Username:    request.Username,
@@ -99,8 +99,8 @@ func (service *UserService) EditUser(ctx *gin.Context, request *dto.UserEditRequ
 	user, err := service.UserRepository.FindUserById(tx, userId)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "User not found", err.Error())
-		ctx.Error(err)
 		tx.Rollback()
+		ctx.Error(err)
 		return nil
 	}
 
@@ -112,8 +112,8 @@ func (service *UserService) EditUser(ctx *gin.Context, request *dto.UserEditRequ
 	user, err = service.UserRepository.EditUser(tx, user)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "User failed to add", err.Error())
-		ctx.Error(err)
 		tx.Rollback()
+		ctx.Error(err)
 		return nil
 	}
 
@@ -186,6 +186,7 @@ func (service *UserService) ChangePassword(ctx *gin.Context, request *dto.UserCh
 	err = service.UserRepository.ChangeUserPassword(tx, *userId, newPassword)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to update credentials", err.Error())
+		tx.Rollback()
 		ctx.Error(err)
 		return
 	}
