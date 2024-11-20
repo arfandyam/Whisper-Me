@@ -6,5 +6,5 @@ type AuthRequestBody struct {
 }
 
 type RefreshTokenRequestBody struct {
-	RefreshToken string `validate:"required" json:"refreshtoken"`
+	RefreshToken string `validate:"required" json:"refresh_token"`
 }
