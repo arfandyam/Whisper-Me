@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/arfandyam/Whisper-Me/config"
 	"github.com/arfandyam/Whisper-Me/controllers"
 	"github.com/arfandyam/Whisper-Me/initializers"
 	"github.com/arfandyam/Whisper-Me/repository"
@@ -24,6 +25,9 @@ func main() {
 
 	r.Use(GlobalErrorHandler())
 
+	//App Oauth Config
+	appConfig := config.NewAppOauthConfig()
+
 	//Token Manager
 	tokenManager := tokenize.NewTokenManager()
 
@@ -37,7 +41,7 @@ func main() {
 	// Auth
 	authRepository := repository.NewAuthRepository()
 	authService := service.NewAuthService(authRepository, userRepository, tokenManager, db)
-	authController := controllers.NewAuthController(authService)
+	authController := controllers.NewAuthController(authService, appConfig)
 
 	auth.AuthRoutes(r, authController)
 
