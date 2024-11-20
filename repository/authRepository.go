@@ -12,7 +12,7 @@ func NewAuthRepository() AuthRepositoryInterface {
 	return &AuthRepository{}
 }
 
-func (repository *AuthRepository) LoginUser(tx *gorm.DB, token *string) error {
+func (repository *AuthRepository) InsertRefreshToken(tx *gorm.DB, token *string) error {
 	sql := "INSERT INTO authentications (token) VALUES(?) RETURNING token"
 
 	rows := tx.Raw(sql, token).Row()
