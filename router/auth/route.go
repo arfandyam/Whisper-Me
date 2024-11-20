@@ -11,5 +11,7 @@ func AuthRoutes(route *gin.Engine, authController controllers.AuthControllerInte
         auth.POST("", authController.LoginUser)
         auth.PUT("", authController.UpdateAccessToken)
         auth.DELETE("", authController.LogoutUser)
+        auth.GET("/google", authController.UserGoogleOauthLogin)
+        auth.GET("/google/callback", authController.GoogleOauthCallback)
     }
 }
