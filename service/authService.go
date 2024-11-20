@@ -65,7 +65,7 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	fmt.Println("testtt1")
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
-	accessToken, iat, exp, err := service.TokenManager.GenerateToken(user.Id, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	accessToken, accessTokenIat, accessTokenExp, err := service.TokenManager.GenerateToken(user.Id, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to sign jwt", err.Error())
@@ -75,7 +75,7 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	fmt.Println("testtt2")
 	refreshTokenAge, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_AGE"))
-	refreshToken, _, _, err := service.TokenManager.GenerateToken(user.Id, refreshTokenAge, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
+	refreshToken, refreshTokenIat, refreshTokenExp, err := service.TokenManager.GenerateToken(user.Id, refreshTokenAge, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
 		ctx.Error(err)
@@ -84,7 +84,7 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	fmt.Println("testtt3")
 
-	if err := service.AuthRepository.InsertRefreshToken(tx, &refreshToken); err != nil {
+	if err := service.AuthRepository.InsertRefreshToken(tx, user.Id, refreshToken, refreshTokenIat.Time, refreshTokenExp.Time); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to store token", err.Error())
 		tx.Rollback()
 		ctx.Error(err)
@@ -94,8 +94,8 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	return &dto.AuthResponseBody{
 		AccessToken:    accessToken,
-		AccessTokenIat: *iat,
-		AccessTokenExp: *exp,
+		AccessTokenIat: *accessTokenIat,
+		AccessTokenExp: *accessTokenExp,
 		RefreshToken:   refreshToken,
 	}
 }
@@ -203,7 +203,7 @@ func (service *AuthService) OauthLoginUser(ctx *gin.Context, request *dto.UserCr
 
 	fmt.Println("user luar if", user)
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
-	accessToken, iat, exp, err := service.TokenManager.GenerateToken(user.Id, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	accessToken, accessTokenIat, accessTokenExp, err := service.TokenManager.GenerateToken(user.Id, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to sign jwt", err.Error())
 		ctx.Error(err)
@@ -212,14 +212,14 @@ func (service *AuthService) OauthLoginUser(ctx *gin.Context, request *dto.UserCr
 
 	fmt.Println("testtt2")
 	refreshTokenAge, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_AGE"))
-	refreshToken, _, _, err := service.TokenManager.GenerateToken(user.Id, refreshTokenAge, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
+	refreshToken, refreshTokenIat, refreshTokenExp, err := service.TokenManager.GenerateToken(user.Id, refreshTokenAge, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to sign jwt", err.Error())
 		ctx.Error(err)
 		return nil
 	}
 
-	if err := service.AuthRepository.InsertRefreshToken(tx, &refreshToken); err != nil {
+	if err := service.AuthRepository.InsertRefreshToken(tx, user.Id, refreshToken, refreshTokenIat.Time, refreshTokenExp.Time); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to store token", err.Error())
 		tx.Rollback()
 		ctx.Error(err)
@@ -230,8 +230,8 @@ func (service *AuthService) OauthLoginUser(ctx *gin.Context, request *dto.UserCr
 
 	return &dto.AuthResponseBody{
 		AccessToken:    accessToken,
-		AccessTokenIat: *iat,
-		AccessTokenExp: *exp,
+		AccessTokenIat: *accessTokenIat,
+		AccessTokenExp: *accessTokenExp,
 		RefreshToken:   refreshToken,
 	}
 }
