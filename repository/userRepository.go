@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+
 	"github.com/arfandyam/Whisper-Me/models/domain"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -15,7 +17,7 @@ func NewUserRepository() UserRepositoryInterface {
 
 func (repository *UserRepository) CreateUser(tx *gorm.DB, user *domain.User) (*domain.User, error) {
 	sql := "INSERT INTO users (id, username, firstname, lastname, email, password, oauth_id, is_oauth, is_verified, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?) RETURNING id"
-	
+
 	rows := tx.Raw(sql, user.Id, user.Username, user.Firstname, user.Lastname, user.Email, &user.Password, user.Oauth_id, user.Is_oauth, user.Is_verified, nil, nil).Row()
 
 	if err := rows.Scan(&user.Id); err != nil {
@@ -38,16 +40,32 @@ func (repository *UserRepository) EditUser(tx *gorm.DB, user *domain.User) (*dom
 	return user, nil
 }
 
-func (repository *UserRepository) FindUserById(db *gorm.DB, userId uuid.UUID) (*domain.User, error){
+func (repository *UserRepository) FindUserById(tx *gorm.DB, userId uuid.UUID) (*domain.User, error) {
 	sql := "SELECT * FROM users WHERE id = ?"
 	user := &domain.User{}
 
-	if err := db.Raw(sql, userId).Scan(&user).Error; err != nil {
-		fmt.Println("oiii")
-		return nil, err
+	if err := tx.Raw(sql, userId).First(user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, err
+		}
 	}
 
 	fmt.Println("oiii2")
+	return user, nil
+}
+
+func (repository *UserRepository) FindUserByEmail(tx *gorm.DB, email string) (*domain.User, error) {
+	fmt.Println("email", email)
+	sql := "SELECT * FROM users WHERE email = ?"
+	user := &domain.User{}
+
+	if err := tx.Raw(sql, email).First(user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, err
+		}
+	}
+
+	fmt.Println("user dari repo finduserbyemail", user)
 	return user, nil
 }
 
@@ -71,11 +89,11 @@ func (repository *UserRepository) GetUserPassword(db *gorm.DB, userId uuid.UUID)
 	return &password, nil
 }
 
-func (repository *UserRepository) GetUserCredentials(db *gorm.DB, username string) (*domain.User, error) {
+func (repository *UserRepository) GetUserCredentials(tx *gorm.DB, username string) (*domain.User, error) {
 	fmt.Println("username", username)
 	user := domain.User{}
 	sql := "SELECT id, username, password FROM users WHERE username = ?"
-	rows := db.Raw(sql, username).Row()
+	rows := tx.Raw(sql, username).Row()
 	if err := rows.Scan(&user.Id, &user.Username, &user.Password); err != nil {
 		return nil, err
 	}

@@ -9,8 +9,9 @@ import (
 type UserRepositoryInterface interface {
 	CreateUser(tx *gorm.DB, user *domain.User) (*domain.User, error)
 	EditUser(tx *gorm.DB, user *domain.User) (*domain.User, error)
-	FindUserById(db *gorm.DB, userId uuid.UUID) (*domain.User, error)
+	FindUserById(tx *gorm.DB, userId uuid.UUID) (*domain.User, error)
+	FindUserByEmail(db *gorm.DB, email string) (*domain.User, error)
 	ChangeUserPassword(tx *gorm.DB, userId uuid.UUID, password string) error
 	GetUserPassword(db *gorm.DB, userId uuid.UUID) (*string, error)
-	GetUserCredentials(db *gorm.DB, username string) (*domain.User, error)
+	GetUserCredentials(tx *gorm.DB, username string) (*domain.User, error)
 }
