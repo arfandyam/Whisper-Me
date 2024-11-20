@@ -8,33 +8,35 @@ import (
 
 type User struct {
 	gorm.Model
-	Id          uuid.UUID `gorm:primaryKey;notNull`
-	Username    string    `gorm:unique;notNull`
-	Firstname   string    `gorm:notNull`
-	Lastname    string    `gorm:notNull`
-	Email       string    `gorm:unique;notNull`
+	Id          uuid.UUID `gorm:"primaryKey;not null"`
+	Username    string    `gorm:"unique;not null"`
+	Firstname   string    `gorm:"not null"`
+	Lastname    string    `gorm:"not null"`
+	Email       string    `gorm:"unique;not null"`
 	Password    string
 	Oauth_id    string
-	Is_oauth    bool `gorm:notNull`
-	Is_verified bool `gorm:notNull`
+	Is_oauth    bool 	  `gorm:"not null"`
+	Is_verified bool 	  `gorm:"not null"`
+	Questions   []Question
 }
 
 type Question struct {
 	gorm.Model
-	Id       uuid.UUID `gorm:primaryKey;notNull`
-	User     User      `gorm:"foreignKey:id";notNull`
-	Slug     string    `gorm:notNull`
-	Question string    `gorm:notNull`
+	Id        uuid.UUID `gorm:"primaryKey;not null"`
+	UserId    uuid.UUID
+	Slug      string 	`gorm:"not null"`
+	Question  string 	`gorm:"not null"`
+	Responses []Response
 }
 
 type Response struct {
 	gorm.Model
-	Id       uuid.UUID `gorm:primaryKey;notNull`
-	Question Question  `gorm:"foreignKey:id";notNull`
-	Slug     string    `gorm:notNull`
-	Response string    `gorm:notNull`
+	Id         uuid.UUID `gorm:"primaryKey;not null"`
+	QuestionID uuid.UUID
+	Slug       string    `gorm:"not null"`
+	Response   string    `gorm:"not null"`
 }
 
 type Authentication struct {
-	Token string `gorm:notNull`
+	Token string `gorm:"not null"`
 }
