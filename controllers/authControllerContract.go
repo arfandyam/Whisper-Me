@@ -6,4 +6,6 @@ type AuthControllerInterface interface {
 	LoginUser(ctx *gin.Context)
 	UpdateAccessToken(ctx *gin.Context)
 	LogoutUser(ctx *gin.Context)
+	UserGoogleOauthLogin(ctx *gin.Context)
+	GoogleOauthCallback(ctx *gin.Context)
 }
