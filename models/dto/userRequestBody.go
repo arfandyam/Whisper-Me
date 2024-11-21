@@ -1,7 +1,7 @@
 package dto
 
 type UserCreateRequest struct {
-	Username  string `validate:"required,min=1,max=100" json:"user_name"`
+	Username  string `validate:"required,min=1,max=100" json:"username"`
 	Firstname string `validate:"required,min=1,max=100" json:"first_name"`
 	Lastname  string `validate:"required,min=1,max=100" json:"last_name"`
 	Email     string `validate:"required,min=1,max=100" json:"email"`
