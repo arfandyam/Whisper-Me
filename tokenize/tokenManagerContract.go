@@ -6,6 +6,6 @@ import (
 )
 
 type TokenManagerInterface interface {
-	GenerateToken(id uuid.UUID, tokenAge int, secretKeyString string) (string, *jwt.NumericDate, *jwt.NumericDate,  error)
+	GenerateToken(id interface{}, tokenAge int, secretKeyString string) (string, *jwt.NumericDate, *jwt.NumericDate,  error)
 	VerifyToken(tokenString string, secretKeyString string) (*uuid.UUID, error)
 }

@@ -14,19 +14,32 @@ func NewTokenManager() TokenManagerInterface {
 	return &TokenManager{}
 }
 
-func (tokenManager *TokenManager) GenerateToken(id uuid.UUID, tokenAge int, secretKeyString string) (string, *jwt.NumericDate, *jwt.NumericDate, error) {
+func (tokenManager *TokenManager) GenerateToken(id interface{}, tokenAge int, secretKeyString string) (string, *jwt.NumericDate, *jwt.NumericDate, error) {
 	secretKey := []byte(secretKeyString)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"id":  id,
-			"exp": jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(tokenAge))),
-			"iat": jwt.NewNumericDate(time.Now()),
-		})
+	
+	var token *jwt.Token
+	if val, ok := id.(uuid.UUID); ok {
+		token = jwt.NewWithClaims(jwt.SigningMethodHS256,
+			jwt.MapClaims{
+				"id":  val,
+				"exp": jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(tokenAge))),
+				"iat": jwt.NewNumericDate(time.Now()),
+			})
+	} else if val, ok := id.(string); ok {
+		token = jwt.NewWithClaims(jwt.SigningMethodHS256,
+			jwt.MapClaims{
+				"id":  val,
+				"exp": jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(tokenAge))),
+				"iat": jwt.NewNumericDate(time.Now()),
+			})
+	} else {
+		return "", nil, nil, fmt.Errorf("unsupported type to generate token: %T", id)
+	}
 	tokenString, err := token.SignedString(secretKey)
 	claims, _ := token.Claims.(jwt.MapClaims)
 	exp := claims["exp"].(*jwt.NumericDate)
 	iat := claims["iat"].(*jwt.NumericDate)
-	if err != nil  {
+	if err != nil {
 		return "", nil, nil, err
 	}
 
