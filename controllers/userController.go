@@ -2,28 +2,30 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"net/http"
+	"strings"
 )
 
 type UserController struct {
-	UserService service.UserServiceInterface
+	UserService      service.UserServiceInterface
+	UserEmailService service.UserEmailServiceInterface
 }
 
-func NewUserController(userService service.UserServiceInterface) UserControllerInterface {
+func NewUserController(userService service.UserServiceInterface, userEmailService service.UserEmailServiceInterface) UserControllerInterface {
 	return &UserController{
 		UserService: userService,
+		UserEmailService: userEmailService,
 	}
 }
 
 func (controller *UserController) CreateUser(ctx *gin.Context) {
 	userReq := &dto.UserCreateRequest{}
 	// fmt.Println("req.body", ctx.ShouldBindBodyWithJSON(&userReq))
-	userResponse := controller.UserService.CreateUser(ctx, userReq)
+	userResponse := controller.UserEmailService.CreateUserAndSendEmailVerification(ctx, userReq)
 	if userResponse == nil {
 		return
 	}
@@ -64,25 +66,25 @@ func (controller *UserController) FindUserById(ctx *gin.Context) {
 	fmt.Println("userResponse controller", userResponse)
 
 	userResponse.Response = &dto.Response{
-		Status: "success",
+		Status:  "success",
 		Message: "Berhasil mendapatkan data.",
 	}
 
 	ctx.JSON(http.StatusOK, userResponse)
 }
 
-func (controller *UserController) ChangePassword(ctx *gin.Context){
+func (controller *UserController) ChangePassword(ctx *gin.Context) {
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
 
 	userReq := &dto.UserChangePasswordRequest{}
 	controller.UserService.ChangePassword(ctx, userReq, accessToken)
 
 	if len(ctx.Errors) > 0 {
-		return 
+		return
 	}
 
 	ctx.JSON(http.StatusOK, &dto.Response{
-		Status: "success",
+		Status:  "success",
 		Message: "Berhasil memperbarui data.",
 	})
 
