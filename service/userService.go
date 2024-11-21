@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
 	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/models/domain"
@@ -30,14 +29,7 @@ func NewUserService(userRepository repository.UserRepositoryInterface, tokenMana
 	}
 }
 
-func (service *UserService) CreateUser(ctx *gin.Context, request *dto.UserCreateRequest) *dto.UserCreateResponse {
-	// Melakukan validasi berdasarkan UserCreateBody
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
-		ctx.Error(err)
-		return nil
-	}
-
+func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *dto.UserCreateRequest) *dto.UserCreateResponse {
 	// Create Id
 	userId := uuid.New()
 
@@ -61,21 +53,20 @@ func (service *UserService) CreateUser(ctx *gin.Context, request *dto.UserCreate
 		Is_verified: false,
 	}
 
-	tx := service.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+	// tx := service.DB.Begin()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		tx.Rollback()
+	// 	}
+	// }()
 
 	user, err = service.UserRepository.CreateUser(tx, user)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "User failed to add", err.Error())
 		ctx.Error(err)
-		tx.Rollback()
 		return nil
 	}
-	tx.Commit()
+	// tx.Commit()
 
 	return &dto.UserCreateResponse{
 		Id: user.Id,
