@@ -31,10 +31,14 @@ func main() {
 	//Token Manager
 	tokenManager := tokenize.NewTokenManager()
 
+	//Email Service
+	emailService := service.NewEmailService()
+
 	// User
 	userRepository := repository.NewUserRepository()
 	userService := service.NewUserService(userRepository, tokenManager, db)
-	userController := controllers.NewUserController(userService)
+	userEmailService := service.NewUserEmailService(userService, emailService, tokenManager, db) //user and email service intermediary
+	userController := controllers.NewUserController(userService, userEmailService)
 
 	user.UserRoutes(r, userController)
 
