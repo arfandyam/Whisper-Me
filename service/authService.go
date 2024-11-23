@@ -113,15 +113,17 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 		return nil
 	}
 
-	userId, err := service.TokenManager.VerifyToken(request.RefreshToken, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
+	claimsId, err := service.TokenManager.VerifyToken(request.RefreshToken, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
 		ctx.Error(err)
 		return nil
 	}
 
+	userId, err := uuid.Parse(claimsId)
+
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
-	accessToken, iat, exp, err := service.TokenManager.GenerateToken(*userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	accessToken, iat, exp, err := service.TokenManager.GenerateToken(userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
 		ctx.Error(err)
