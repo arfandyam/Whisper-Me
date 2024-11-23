@@ -140,14 +140,20 @@ func (service *UserService) ChangePassword(ctx *gin.Context, request *dto.UserCh
 		return
 	}
 
-	userId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
 		ctx.Error(err)
 		return
 	}
+	userId, err := uuid.Parse(claimsId)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusInternalServerError, "Failed to parse token", err.Error())
+		ctx.Error(err)
+		return
+	}
 
-	password, err := service.UserRepository.GetUserPassword(service.DB, *userId)
+	password, err := service.UserRepository.GetUserPassword(service.DB, userId)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "User not found.", err.Error())
 		ctx.Error(err)
@@ -174,9 +180,35 @@ func (service *UserService) ChangePassword(ctx *gin.Context, request *dto.UserCh
 		}
 	}()
 
-	err = service.UserRepository.ChangeUserPassword(tx, *userId, newPassword)
+	err = service.UserRepository.ChangeUserPassword(tx, userId, newPassword)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to update credentials", err.Error())
+		tx.Rollback()
+		ctx.Error(err)
+		return
+	}
+
+	tx.Commit()
+}
+
+func (service *UserService) VerifyUsersEmail(ctx *gin.Context, queryToken string){
+	email, err := service.TokenManager.VerifyToken(queryToken, os.Getenv("EMAIL_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to parse token", err.Error())
+		ctx.Error(err)
+		return
+	}
+
+	tx := service.DB.Begin()
+	defer func(){
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err = service.UserRepository.VerifyUsersEmail(tx, email)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to change verified status", err.Error())
 		tx.Rollback()
 		ctx.Error(err)
 		return

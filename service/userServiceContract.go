@@ -12,4 +12,5 @@ type UserServiceInterface interface {
 	EditUser(ctx *gin.Context, request *dto.UserEditRequest, userId uuid.UUID) *dto.UserEditResponse
 	FindUserById(ctx *gin.Context, userId uuid.UUID) *dto.UserFindByIdResponse
 	ChangePassword(ctx *gin.Context, request *dto.UserChangePasswordRequest, accessToken string)
+	VerifyUsersEmail(ctx *gin.Context, queryToken string)
 }
