@@ -1,4 +1,4 @@
-package auth
+package router
 
 import (
 	"github.com/arfandyam/Whisper-Me/controllers"
