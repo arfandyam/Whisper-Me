@@ -27,7 +27,7 @@ func NewUserEmailService(userService UserServiceInterface, emailService EmailSer
 	}
 }
 
-func (service *UserEmailService) CreateUserAndSendEmailVerification(ctx *gin.Context, request *dto.UserCreateRequest) *dto.UserCreateResponse {
+func (service *UserEmailService) CreateUserAndSendEmailVerification(ctx *gin.Context, request *dto.UserCreateRequest) *dto.CreateResponse {
 	// Melakukan validasi berdasarkan UserCreateBody
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())

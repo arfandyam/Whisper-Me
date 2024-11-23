@@ -29,7 +29,7 @@ func NewUserService(userRepository repository.UserRepositoryInterface, tokenMana
 	}
 }
 
-func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *dto.UserCreateRequest) *dto.UserCreateResponse {
+func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *dto.UserCreateRequest) *dto.CreateResponse {
 	// Create Id
 	userId := uuid.New()
 
@@ -68,7 +68,7 @@ func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *d
 	}
 	// tx.Commit()
 
-	return &dto.UserCreateResponse{
+	return &dto.CreateResponse{
 		Id: user.Id,
 	}
 }

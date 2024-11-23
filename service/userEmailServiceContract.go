@@ -6,5 +6,5 @@ import (
 )
 
 type UserEmailServiceInterface interface {
-	CreateUserAndSendEmailVerification(ctx *gin.Context, request *dto.UserCreateRequest) *dto.UserCreateResponse
+	CreateUserAndSendEmailVerification(ctx *gin.Context, request *dto.UserCreateRequest) *dto.CreateResponse
 }
