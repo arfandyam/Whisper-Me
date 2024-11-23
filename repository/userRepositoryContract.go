@@ -14,4 +14,5 @@ type UserRepositoryInterface interface {
 	ChangeUserPassword(tx *gorm.DB, userId uuid.UUID, password string) error
 	GetUserPassword(db *gorm.DB, userId uuid.UUID) (*string, error)
 	GetUserCredentials(tx *gorm.DB, username string) (*domain.User, error)
+	VerifyUsersEmail(tx *gorm.DB, email string) error
 }

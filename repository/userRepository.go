@@ -70,7 +70,7 @@ func (repository *UserRepository) FindUserByEmail(tx *gorm.DB, email string) (*d
 }
 
 func (repository *UserRepository) ChangeUserPassword(tx *gorm.DB, userId uuid.UUID, password string) error {
-	sql := "UPDATE users SET password = ? WHERE id = ?"
+	sql := "UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?"
 
 	if err := tx.Exec(sql, password, userId).Error; err != nil {
 		return err
@@ -99,4 +99,13 @@ func (repository *UserRepository) GetUserCredentials(tx *gorm.DB, username strin
 	}
 
 	return &user, nil
+}
+
+func (repository *UserRepository) VerifyUsersEmail(tx *gorm.DB, email string) error {
+	sql := "UPDATE users SET is_verified = ?, updated_at = NOW() WHERE email = ?"
+	if err := tx.Exec(sql, true, email).Error; err != nil {
+		return err
+	}
+	
+	return nil
 }
