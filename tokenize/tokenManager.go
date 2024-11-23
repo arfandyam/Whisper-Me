@@ -16,7 +16,7 @@ func NewTokenManager() TokenManagerInterface {
 
 func (tokenManager *TokenManager) GenerateToken(id interface{}, tokenAge int, secretKeyString string) (string, *jwt.NumericDate, *jwt.NumericDate, error) {
 	secretKey := []byte(secretKeyString)
-	
+
 	var token *jwt.Token
 	if val, ok := id.(uuid.UUID); ok {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS256,
@@ -28,9 +28,9 @@ func (tokenManager *TokenManager) GenerateToken(id interface{}, tokenAge int, se
 	} else if val, ok := id.(string); ok {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS256,
 			jwt.MapClaims{
-				"id":  val,
-				"exp": jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(tokenAge))),
-				"iat": jwt.NewNumericDate(time.Now()),
+				"email": val,
+				"exp":   jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(tokenAge))),
+				"iat":   jwt.NewNumericDate(time.Now()),
 			})
 	} else {
 		return "", nil, nil, fmt.Errorf("unsupported type to generate token: %T", id)
@@ -46,25 +46,22 @@ func (tokenManager *TokenManager) GenerateToken(id interface{}, tokenAge int, se
 	return tokenString, iat, exp, nil
 }
 
-func (tokenManager *TokenManager) VerifyToken(tokenString string, secretKeyString string) (*uuid.UUID, error) {
+func (tokenManager *TokenManager) VerifyToken(tokenString string, secretKeyString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		return []byte(secretKeyString), nil
 	})
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		if id, ok := claims["id"].(string); ok {
-			id, err := uuid.Parse(id)
-			if err != nil {
-				return nil, err
-			}
-
-			return &id, nil
+			return id, nil
+		} else if email, ok := claims["email"].(string); ok {
+			return email, nil
 		}
 	}
 
-	return nil, fmt.Errorf("invalid access token")
+	return "", fmt.Errorf("invalid access token")
 }
