@@ -7,4 +7,5 @@ type UserControllerInterface interface {
 	EditUser(ctx *gin.Context)
 	FindUserById(ctx *gin.Context)
 	ChangePassword(ctx *gin.Context)
+	VerifyUsersEmail(ctx *gin.Context)
 }

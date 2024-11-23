@@ -87,5 +87,18 @@ func (controller *UserController) ChangePassword(ctx *gin.Context) {
 		Status:  "success",
 		Message: "Berhasil memperbarui data.",
 	})
+}
 
+func (controller *UserController) VerifyUsersEmail(ctx *gin.Context){
+	queryToken := ctx.Query("token")
+	controller.UserService.VerifyUsersEmail(ctx, queryToken)
+
+	if len(ctx.Errors) > 0 {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &dto.Response{
+		Status: "success",
+		Message: "Berhasil memperbarui data.",
+	})
 }
