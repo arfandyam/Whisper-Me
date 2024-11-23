@@ -27,7 +27,8 @@ type Question struct {
 	gorm.Model
 	Id        uuid.UUID `gorm:"primaryKey;not null"`
 	UserId    uuid.UUID
-	Slug      string `gorm:"not null"`
+	Slug      string `gorm:"unique;not null"`
+	Topic     string `gorm:"not null"`
 	Question  string `gorm:"not null"`
 	Responses []Response
 }
@@ -36,7 +37,6 @@ type Response struct {
 	gorm.Model
 	Id         uuid.UUID `gorm:"primaryKey;not null"`
 	QuestionID uuid.UUID
-	Slug       string `gorm:"not null"`
 	Response   string `gorm:"not null"`
 }
 
