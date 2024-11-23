@@ -5,8 +5,7 @@ import (
 	"github.com/arfandyam/Whisper-Me/controllers"
 	"github.com/arfandyam/Whisper-Me/initializers"
 	"github.com/arfandyam/Whisper-Me/repository"
-	"github.com/arfandyam/Whisper-Me/router/auth"
-	"github.com/arfandyam/Whisper-Me/router/user"
+	"github.com/arfandyam/Whisper-Me/router"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/arfandyam/Whisper-Me/tokenize"
 	"github.com/gin-gonic/gin"
@@ -40,14 +39,21 @@ func main() {
 	userEmailService := service.NewUserEmailService(userService, emailService, tokenManager, db) //user and email service intermediary
 	userController := controllers.NewUserController(userService, userEmailService)
 
-	user.UserRoutes(r, userController)
+	router.UserRoutes(r, userController)
 
 	// Auth
 	authRepository := repository.NewAuthRepository()
 	authService := service.NewAuthService(authRepository, userRepository, tokenManager, db)
 	authController := controllers.NewAuthController(authService, appConfig)
 
-	auth.AuthRoutes(r, authController)
+	router.AuthRoutes(r, authController)
+
+	//Question
+	questionRepository := repository.NewQuestionRepository()
+	questionService := service.NewQuestionService(&questionRepository, tokenManager, db)
+	questionController := controllers.NewQuestionController(questionService)
+
+	router.QuestionRoutes(r, questionController)
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
