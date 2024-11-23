@@ -62,7 +62,7 @@ func (service *UserEmailService) CreateUserAndSendEmailVerification(ctx *gin.Con
 
 	emailProperties := &dto.EmailVerificationProperties{
 		ToEmail:          append(receiver, request.Email),
-		Subject:          "Email Verification",
+		Subject:          "WhisperMe Email Verification",
 		VerificationLink: verificationLink,
 		IssuedAt:         emailVerificationTokenIat.Time.Format("Monday, 02 January 2006"),
 		ExpiredAt:        emailVerificationTokenExp.Time.Format("Monday, 02 January 2006"),
