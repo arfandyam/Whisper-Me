@@ -89,7 +89,7 @@ func (service *UserService) EditUser(ctx *gin.Context, request *dto.UserEditRequ
 
 	user, err := service.UserRepository.FindUserById(tx, userId)
 	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "User not found", err.Error())
+		err := exceptions.NewCustomError(http.StatusNotFound, "User not found", err.Error())
 		tx.Rollback()
 		ctx.Error(err)
 		return nil
