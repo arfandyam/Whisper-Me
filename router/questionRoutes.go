@@ -5,10 +5,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func QuestionRoutes(route *gin.Engine, questionController controllers.QuestionControllerInterface){
+func QuestionRoutes(route *gin.Engine, questionController controllers.QuestionControllerInterface) {
 	question := route.Group("/question")
 	{
 		question.POST("", questionController.CreateQuestion)
 		question.PUT(":id", questionController.EditQuestion)
+		question.GET(":id", questionController.FindQuestionById)
 	}
 }

@@ -61,3 +61,23 @@ func (controller *QuestionController) EditQuestion(ctx *gin.Context){
 	ctx.JSON(http.StatusOK, questionResponse)
 }
 
+func (controller *QuestionController) FindQuestionById(ctx *gin.Context){
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+	questionId := uuid.Must(uuid.Parse(ctx.Param("id")))
+
+	// fmt.Println("accessToken", accessToken)
+
+	questionResponse := controller.QuestionService.FindQuestionById(ctx, accessToken, questionId)
+
+	if len(ctx.Errors) > 0 {
+		return
+	}
+
+	questionResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil memperbarui data.",
+	}
+
+	ctx.JSON(http.StatusOK, questionResponse)
+}
+
