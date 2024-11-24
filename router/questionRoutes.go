@@ -9,5 +9,6 @@ func QuestionRoutes(route *gin.Engine, questionController controllers.QuestionCo
 	question := route.Group("/question")
 	{
 		question.POST("", questionController.CreateQuestion)
+		question.PUT(":id", questionController.EditQuestion)
 	}
 }

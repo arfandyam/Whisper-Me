@@ -29,7 +29,7 @@ func NewQuestionService(questionRepository *repository.QuestionRepositoryInterfa
 	}
 }
 
-func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken string, request *dto.CreateQuestionRequest) *dto.CreateResponse {
+func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken string, request *dto.CreateEditQuestionRequest) *dto.CreateEditQuestionResponse {
 	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid request body", err.Error())
 		ctx.Error(err)
@@ -77,7 +77,57 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 
 	tx.Commit()
 
-	return &dto.CreateResponse{
+	return &dto.CreateEditQuestionResponse{
 		Id: question.Id,
+		Slug: question.Slug,
+		Topic: question.Topic,
+		Question: question.Question,
+	}
+}
+
+func (service *QuestionService) EditQuestion(ctx *gin.Context, accessToken string, questionId uuid.UUID, request *dto.CreateEditQuestionRequest) *dto.CreateEditQuestionResponse {
+	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid request body", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	_, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+	
+	slug := libs.ToSlug(request.Topic, questionId)
+	question := &domain.Question{
+		Id: questionId,
+		Slug: slug,
+		Topic: request.Topic,
+		Question: request.Question,
+	}
+
+	tx := service.DB.Begin()
+	defer func(){
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	question, err = service.QuestionRepository.EditQuestion(tx, question)
+
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to edit item", err.Error())
+		ctx.Error(err)
+		tx.Rollback()
+		return nil
+	}
+
+	tx.Commit()
+
+	return &dto.CreateEditQuestionResponse{
+		Id: question.Id,
+		Slug: question.Slug,
+		Topic: question.Topic,
+		Question: question.Question,
 	}
 }

@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	// "fmt"
 	"net/http"
 	"strings"
+
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type QuestionController struct {
@@ -20,7 +23,7 @@ func NewQuestionController(questionService service.QuestionServiceInterface) Que
 
 func (controller *QuestionController) CreateQuestion(ctx *gin.Context){
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	request := &dto.CreateQuestionRequest{}
+	request := &dto.CreateEditQuestionRequest{}
 
 	questionResponse := controller.QuestionService.CreateQuestion(ctx, accessToken, request)
 
@@ -35,3 +38,26 @@ func (controller *QuestionController) CreateQuestion(ctx *gin.Context){
 
 	ctx.JSON(http.StatusCreated, questionResponse)
 }
+
+func (controller *QuestionController) EditQuestion(ctx *gin.Context){
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+	questionId := uuid.Must(uuid.Parse(ctx.Param("id")))
+
+	// fmt.Println("accessToken", accessToken)
+
+	request := &dto.CreateEditQuestionRequest{}
+
+	questionResponse := controller.QuestionService.EditQuestion(ctx, accessToken, questionId, request)
+
+	if len(ctx.Errors) > 0 {
+		return
+	}
+
+	questionResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil memperbarui data.",
+	}
+
+	ctx.JSON(http.StatusOK, questionResponse)
+}
+
