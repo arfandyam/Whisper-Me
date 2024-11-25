@@ -55,6 +55,13 @@ func main() {
 
 	router.QuestionRoutes(r, questionController)
 
+	//Response
+	responseRepository := repository.NewResponseRepository()
+	responseService := service.NewResponseService(responseRepository, db)
+	responseController := controllers.NewResponseController(responseService)
+
+	router.ResponseRoute(r, responseController)
+
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message" : "pong",
