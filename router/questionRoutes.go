@@ -11,5 +11,6 @@ func QuestionRoutes(route *gin.Engine, questionController controllers.QuestionCo
 		question.POST("", questionController.CreateQuestion)
 		question.PUT(":id", questionController.EditQuestion)
 		question.GET(":id", questionController.FindQuestionById)
+		question.GET("", questionController.FindQuestionsByUserId)
 	}
 }

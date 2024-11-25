@@ -81,3 +81,21 @@ func (controller *QuestionController) FindQuestionById(ctx *gin.Context){
 	ctx.JSON(http.StatusOK, questionResponse)
 }
 
+func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+
+
+	questionResponse := controller.QuestionService.FindQuestionsByUserId(ctx, accessToken)
+
+	if len(ctx.Errors) > 0 {
+		return
+	}
+
+	questionResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil mendapatkan data",
+	}
+
+	ctx.JSON(http.StatusOK, questionResponse)
+}
+

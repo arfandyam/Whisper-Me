@@ -163,5 +163,30 @@ func (service *QuestionService) FindQuestionById(ctx *gin.Context, accessToken s
 		Topic:    question.Topic,
 		Question: question.Question,
 	}
+}
 
+func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessToken string) *dto.FindQuestionsByUserIdResponse {
+	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	userId := uuid.Must(uuid.Parse(claimsId))
+	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	var questionsDTO []dto.QuestionDTO
+	for i:=0; i < len(questions); i++ {
+		questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+	}
+
+	return &dto.FindQuestionsByUserIdResponse{
+		Data: questionsDTO,
+	}
 }

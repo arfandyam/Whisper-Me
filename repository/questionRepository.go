@@ -44,3 +44,15 @@ func (repository *QuestionRepository) FindQuestionById(tx *gorm.DB, questionId u
 
 	return question, nil
 }
+
+func (repository *QuestionRepository) FindQuestionsByUserId(tx *gorm.DB, userId uuid.UUID) ([]domain.Question, error){
+	questions := []domain.Question{}
+	sql := "SELECT id, user_id, slug, topic, question FROM questions WHERE user_id = ?"
+
+	rows := tx.Raw(sql, userId)
+	if err := rows.Scan(&questions).Error; err != nil {
+		return nil, err
+	}
+
+	return questions, nil
+}
