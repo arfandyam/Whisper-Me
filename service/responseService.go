@@ -2,11 +2,13 @@ package service
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/models/domain"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/repository"
+	"github.com/arfandyam/Whisper-Me/tokenize"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -14,12 +16,16 @@ import (
 
 type ResponseService struct {
 	ResponseRepository repository.ResponseRepositoryInterface
+	QuestionRepository repository.QuestionRepositoryInterface
+	TokenManager       tokenize.TokenManagerInterface
 	DB                 *gorm.DB
 }
 
-func NewResponseService(responseRepository repository.ResponseRepositoryInterface, DB *gorm.DB) ResponseServiceInterface {
+func NewResponseService(responseRepository repository.ResponseRepositoryInterface, questionRepository repository.QuestionRepositoryInterface, tokenManager tokenize.TokenManagerInterface, DB *gorm.DB) ResponseServiceInterface {
 	return &ResponseService{
 		ResponseRepository: responseRepository,
+		QuestionRepository: questionRepository,
+		TokenManager:       tokenManager,
 		DB:                 DB,
 	}
 }
@@ -57,9 +63,72 @@ func (service *ResponseService) CreateResponse(ctx *gin.Context, request *dto.Cr
 
 	return &dto.CreateEditAnswerResponse{
 		Data: dto.ResponseDTO{
-			Id: response.Id,
+			Id:         response.Id,
 			QuestionId: response.QuestionId,
-			Response: response.Response,
+			Response:   response.Response,
 		},
+	}
+}
+
+func (service *ResponseService) FindResponseByQuestionId(ctx *gin.Context, questionId uuid.UUID, page int, accessToken string) *dto.FindAnswerResponse {
+	tx := service.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	userId, err := service.QuestionRepository.FindQuestionOwner(tx, questionId)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusNotFound, "Failed to fetch user id", err.Error())
+		tx.Rollback()
+		ctx.Error(err)
+		return nil
+	}
+
+	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to verify token", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	userIdFromClaims := uuid.MustParse(claimsId)
+
+	if userIdFromClaims != *userId {
+		err := exceptions.NewCustomError(http.StatusUnauthorized, "Unauthorized", "Source not allowed to access")
+		ctx.Error(err)
+		return nil
+	}
+
+	fetchPerPage := 10
+	offset := (page - 1) * fetchPerPage
+
+	responses, err := service.ResponseRepository.FindResponseByQuestionId(tx, questionId, fetchPerPage, offset)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch responses/answers", err.Error())
+		tx.Rollback()
+		ctx.Error(err)
+		return nil
+	}
+
+	var responsesDTO []dto.FullResponseDTO
+	for i:=0; i < len(responses); i++ {
+		responsesDTO = append(responsesDTO, dto.FullResponseDTO{
+			ResponseDTO: dto.ResponseDTO{
+				Id: responses[i].Id,
+				QuestionId: responses[i].QuestionId,
+				Response: responses[i].Response,
+			},
+
+			ResponseTimestampDTO: dto.ResponseTimestampDTO{
+				CreatedAt: responses[i].CreatedAt,
+				UpdatedAt: responses[i].UpdatedAt,
+			},
+		})
+	}
+
+	return &dto.FindAnswerResponse{
+		Data: responsesDTO,
 	}
 }

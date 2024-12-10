@@ -57,7 +57,7 @@ func main() {
 
 	//Response
 	responseRepository := repository.NewResponseRepository()
-	responseService := service.NewResponseService(responseRepository, db)
+	responseService := service.NewResponseService(responseRepository, questionRepository, tokenManager, db)
 	responseController := controllers.NewResponseController(responseService)
 
 	router.ResponseRoute(r, responseController)

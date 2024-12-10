@@ -45,14 +45,27 @@ func (repository *QuestionRepository) FindQuestionById(tx *gorm.DB, questionId u
 	return question, nil
 }
 
-func (repository *QuestionRepository) FindQuestionsByUserId(tx *gorm.DB, userId uuid.UUID) ([]domain.Question, error){
+func (repository *QuestionRepository) FindQuestionsByUserId(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, offset int) ([]domain.Question, error){
 	questions := []domain.Question{}
-	sql := "SELECT id, user_id, slug, topic, question FROM questions WHERE user_id = ?"
+	sql := "SELECT id, user_id, slug, topic, question FROM questions WHERE user_id = ? LIMIT ? OFFSET ?"
 
-	rows := tx.Raw(sql, userId)
+	rows := tx.Raw(sql, userId, fetchPerPage, offset)
 	if err := rows.Scan(&questions).Error; err != nil {
 		return nil, err
 	}
 
 	return questions, nil
+}
+
+func (repository *QuestionRepository) FindQuestionOwner(tx *gorm.DB, questionId uuid.UUID) (*uuid.UUID, error) {
+	var userId uuid.UUID
+
+	sql := "SELECT user_id FROM questions WHERE id = ?"
+
+	rows := tx.Raw(sql, questionId).Row()
+	if err := rows.Scan(&userId); err != nil {
+		return nil, err
+	}
+
+	return &userId, nil
 }

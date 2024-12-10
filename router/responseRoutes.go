@@ -9,5 +9,6 @@ func ResponseRoute(route *gin.Engine, responseController controllers.ResponseCon
 	response := route.Group("/response")
 	{
 		response.POST("", responseController.CreateResponse)
+		response.GET(":questionId", responseController.FindResponseByQuestionId)
 	}
 }
