@@ -165,7 +165,7 @@ func (service *QuestionService) FindQuestionById(ctx *gin.Context, accessToken s
 	}
 }
 
-func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessToken string) *dto.FindQuestionsByUserIdResponse {
+func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessToken string, page int) *dto.FindQuestionsByUserIdResponse {
 	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
@@ -174,7 +174,9 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 	}
 
 	userId := uuid.Must(uuid.Parse(claimsId))
-	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId)
+	fetchPerPage := 10
+	offset := (page-1) * fetchPerPage
+	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId, fetchPerPage, offset)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)

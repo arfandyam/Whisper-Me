@@ -2,7 +2,9 @@ package controllers
 
 import (
 	// "fmt"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/arfandyam/Whisper-Me/models/dto"
@@ -83,9 +85,16 @@ func (controller *QuestionController) FindQuestionById(ctx *gin.Context){
 
 func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+	page, err := strconv.Atoi(ctx.Query("page"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status": "failed",
+			"message": "invalid page query",
+		})
+	}
+	fmt.Println("page:", page)
 
-
-	questionResponse := controller.QuestionService.FindQuestionsByUserId(ctx, accessToken)
+	questionResponse := controller.QuestionService.FindQuestionsByUserId(ctx, accessToken, page)
 
 	if len(ctx.Errors) > 0 {
 		return
