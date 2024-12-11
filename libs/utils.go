@@ -52,3 +52,7 @@ func ToSlug(itemString string, itemId uuid.UUID) string {
 
 	return slug
 }
+
+func CalculateOffset(page int, fetchPerPage int) int {
+	return (page-1) * fetchPerPage
+}
