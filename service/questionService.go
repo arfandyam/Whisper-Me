@@ -3,6 +3,7 @@ package service
 import (
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
@@ -80,6 +81,7 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 
 	return &dto.CreateEditQuestionResponse{
 		Id:       question.Id,
+		UserId:   question.UserId,
 		Slug:     question.Slug,
 		Topic:    question.Topic,
 		Question: question.Question,
@@ -174,9 +176,8 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 	}
 
 	userId := uuid.Must(uuid.Parse(claimsId))
-	fetchPerPage := 10
-	offset := (page-1) * fetchPerPage
-	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId, fetchPerPage, offset)
+	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
+	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId, fetchPerPage, libs.CalculateOffset(page, fetchPerPage))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)
@@ -184,7 +185,35 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 	}
 
 	var questionsDTO []dto.QuestionDTO
-	for i:=0; i < len(questions); i++ {
+	for i := 0; i < len(questions); i++ {
+		questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+	}
+
+	return &dto.FindQuestionsByUserIdResponse{
+		Data: questionsDTO,
+	}
+}
+
+func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, page int, keyword string) *dto.FindQuestionsByUserIdResponse {
+	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	userId := uuid.Must(uuid.Parse(claimsId))
+	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
+	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(service.DB, userId, keyword, fetchPerPage, libs.CalculateOffset(page, fetchPerPage))
+
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	var questionsDTO []dto.QuestionDTO
+	for i := 0; i < len(questions); i++ {
 		questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
 	}
 

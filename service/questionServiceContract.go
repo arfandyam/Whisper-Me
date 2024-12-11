@@ -11,4 +11,5 @@ type QuestionServiceInterface interface {
 	EditQuestion(ctx *gin.Context, accessToken string, questionId uuid.UUID, request *dto.CreateEditQuestionRequest) *dto.CreateEditQuestionResponse
 	FindQuestionById(ctx *gin.Context, accessToken string, questionId uuid.UUID) *dto.FindQuestionResponse
 	FindQuestionsByUserId(ctx *gin.Context, accessToken string, page int) *dto.FindQuestionsByUserIdResponse
+	SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, page int, keyword string) *dto.FindQuestionsByUserIdResponse
 }

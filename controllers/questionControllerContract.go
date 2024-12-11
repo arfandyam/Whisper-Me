@@ -7,4 +7,5 @@ type QuestionControllerInterface interface {
 	EditQuestion(ctx *gin.Context)
 	FindQuestionById(ctx *gin.Context)
 	FindQuestionsByUserId(ctx *gin.Context)
+	SearchQuestionsByKeyword(ctx *gin.Context)
 }

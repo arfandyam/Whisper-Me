@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	// "fmt"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -91,8 +89,7 @@ func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 			"status": "failed",
 			"message": "invalid page query",
 		})
-	}
-	fmt.Println("page:", page)
+	}	
 
 	questionResponse := controller.QuestionService.FindQuestionsByUserId(ctx, accessToken, page)
 
@@ -108,3 +105,27 @@ func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 	ctx.JSON(http.StatusOK, questionResponse)
 }
 
+func (controller *QuestionController) SearchQuestionsByKeyword(ctx *gin.Context){
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+	page, err := strconv.Atoi(ctx.Query("page"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status": "failed",
+			"message": "invalid page query",
+		})
+	}
+
+	keyword := ctx.Query("keyword")
+	questionResponse := controller.QuestionService.SearchQuestionsByKeyword(ctx, accessToken, page, keyword)
+
+	if len(ctx.Errors) > 0 {
+		return
+	}
+
+	questionResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil mendapatkan data",
+	}
+
+	ctx.JSON(http.StatusOK, questionResponse)
+}
