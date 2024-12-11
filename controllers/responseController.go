@@ -61,3 +61,29 @@ func (controller *ResponseController) FindResponseByQuestionId(ctx *gin.Context)
 
 	ctx.JSON(http.StatusOK, answerResponse)
 }
+
+func (controller *ResponseController) SearchResponsesByKeyword(ctx *gin.Context){
+	questionId := uuid.MustParse(ctx.Param("questionId"))
+	page, err := strconv.Atoi(ctx.Query("page"))
+	keyword := ctx.Query("keyword")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status": "failed",
+			"message": "invalid page query",
+		})
+	}
+
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, keyword, page, accessToken)
+
+	if len(ctx.Errors) > 0 || answerResponse == nil {
+		return
+	}
+
+	answerResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil mendapatkan data",
+	}
+
+	ctx.JSON(http.StatusOK, answerResponse)
+}

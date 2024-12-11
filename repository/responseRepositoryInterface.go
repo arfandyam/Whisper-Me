@@ -9,4 +9,5 @@ import (
 type ResponseRepositoryInterface interface {
 	CreateResponse(tx *gorm.DB, response *domain.Response) (*domain.Response, error)
 	FindResponseByQuestionId(tx *gorm.DB, questionId uuid.UUID, fetchPerPage int, offset int) ([]domain.Response, error)
+	SearchResponsesByKeyword(tx *gorm.DB, keyword string, questionId uuid.UUID, fetchPerPage int, offset int) ([]domain.Response, error)
 }

@@ -34,3 +34,22 @@ func (repository *ResponseRepository) FindResponseByQuestionId(tx *gorm.DB, ques
 
 	return responses, nil
 }
+
+func (repository *ResponseRepository) SearchResponsesByKeyword(tx *gorm.DB, keyword string, questionId uuid.UUID, fetchPerPage int, offset int) ([]domain.Response, error){
+	responses := []domain.Response{}
+
+	sql := `
+	SELECT id, question_id, response, created_at
+	FROM responses 
+	WHERE question_id = ? AND response_vector @@ plainto_tsquery(?)
+	ORDER BY ts_rank(response_vector, plainto_tsquery(?)) DESC
+	LIMIT ? OFFSET ?
+	`
+
+	rows := tx.Raw(sql, questionId, keyword, keyword, fetchPerPage, offset)
+	if err := rows.Scan(&responses).Error; err != nil {
+		return nil, err
+	}
+
+	return responses, nil
+}

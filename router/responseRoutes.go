@@ -10,5 +10,6 @@ func ResponseRoute(route *gin.Engine, responseController controllers.ResponseCon
 	{
 		response.POST("", responseController.CreateResponse)
 		response.GET(":questionId", responseController.FindResponseByQuestionId)
+		response.GET(":questionId/search", responseController.SearchResponsesByKeyword)
 	}
 }
