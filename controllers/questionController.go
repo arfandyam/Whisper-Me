@@ -1,10 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
-
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
@@ -83,15 +82,11 @@ func (controller *QuestionController) FindQuestionById(ctx *gin.Context){
 
 func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	page, err := strconv.Atoi(ctx.Query("page"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status": "failed",
-			"message": "invalid page query",
-		})
-	}	
+	cursorUrl := ctx.Query("cursor")
+	
+	fmt.Println("cursorUrl:", cursorUrl)
 
-	questionResponse := controller.QuestionService.FindQuestionsByUserId(ctx, accessToken, page)
+	questionResponse := controller.QuestionService.FindQuestionsByUserId(ctx, accessToken, cursorUrl)
 
 	if len(ctx.Errors) > 0 {
 		return
@@ -107,16 +102,9 @@ func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 
 func (controller *QuestionController) SearchQuestionsByKeyword(ctx *gin.Context){
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	page, err := strconv.Atoi(ctx.Query("page"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status": "failed",
-			"message": "invalid page query",
-		})
-	}
-
+	cursor := ctx.Query("cursor")
 	keyword := ctx.Query("keyword")
-	questionResponse := controller.QuestionService.SearchQuestionsByKeyword(ctx, accessToken, page, keyword)
+	questionResponse := controller.QuestionService.SearchQuestionsByKeyword(ctx, accessToken, cursor, keyword)
 
 	if len(ctx.Errors) > 0 {
 		return

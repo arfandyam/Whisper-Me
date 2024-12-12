@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -167,7 +168,7 @@ func (service *QuestionService) FindQuestionById(ctx *gin.Context, accessToken s
 	}
 }
 
-func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessToken string, page int) *dto.FindQuestionsByUserIdResponse {
+func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessToken string, cursorUrl string) *dto.FindQuestionsByUserIdResponse {
 	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
@@ -176,25 +177,73 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 	}
 
 	userId := uuid.Must(uuid.Parse(claimsId))
+
+	var cursor *uuid.UUID
+	if cursorUrl != "" {
+		parsedUUID, err := uuid.Parse(cursorUrl)
+		if err != nil {
+			err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to parse cursor", err.Error())
+			ctx.Error(err)
+			return nil
+		} else {
+			cursor = &parsedUUID
+		}
+	}
+
+	fmt.Println("userId", userId)
+
+	tx := service.DB.Begin()
+	defer func(){
+		if r:= recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
-	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId, fetchPerPage, libs.CalculateOffset(page, fetchPerPage))
+	questions, err := service.QuestionRepository.FindQuestionsByUserId(tx, userId, cursor, fetchPerPage)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)
+		tx.Rollback()
+		return nil
+	}
+	fmt.Println("questions", questions)
+
+	prevCursor, err := service.QuestionRepository.FindPrevCursorQuestion(tx, userId, cursor, fetchPerPage)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prevCursor", err.Error())
+		ctx.Error(err)
+		tx.Rollback()
 		return nil
 	}
 
-	var questionsDTO []dto.QuestionDTO
-	for i := 0; i < len(questions); i++ {
-		questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
-	}
+	tx.Commit()
 
+	var questionsDTO []dto.QuestionDTO
+	var nextCursor *uuid.UUID
+	if len(questions) <= fetchPerPage {
+		nextCursor = nil
+		for i := 0; i <= len(questions)-1; i++ {
+			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+		}
+	} else {
+		nextCursor = &questions[len(questions)-1].Id
+		for i := 0; i <= fetchPerPage-1; i++ {
+			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+		}
+	}
+	
 	return &dto.FindQuestionsByUserIdResponse{
 		Data: questionsDTO,
+		Meta: dto.PageInfo{
+			NextCursor: nextCursor,
+			PrevCursor: prevCursor,
+		},
 	}
+	
 }
 
-func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, page int, keyword string) *dto.FindQuestionsByUserIdResponse {
+func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, cursorUrl string, keyword string) *dto.FindQuestionsByUserIdResponse {
 	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
@@ -203,21 +252,59 @@ func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, acces
 	}
 
 	userId := uuid.Must(uuid.Parse(claimsId))
-	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
-	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(service.DB, userId, keyword, fetchPerPage, libs.CalculateOffset(page, fetchPerPage))
 
+	var cursor *uuid.UUID
+	if cursorUrl != "" {
+		parsedUUID := uuid.MustParse(cursorUrl)
+		cursor = &parsedUUID
+	}
+
+	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
+	tx := service.DB.Begin()
+	defer func(){
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(tx, userId, cursor, keyword, fetchPerPage)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)
+		tx.Rollback()
+		return nil
+	}
+
+	// fmt.Println("questions from service:", questions)
+	prevCursor, err := service.QuestionRepository.FindPrevCursorQuestion(tx, userId, cursor, fetchPerPage)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prevCursor", err.Error())
+		ctx.Error(err)
+		tx.Rollback()
 		return nil
 	}
 
 	var questionsDTO []dto.QuestionDTO
-	for i := 0; i < len(questions); i++ {
-		questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+	var nextCursor *uuid.UUID
+	if len(questions) <= fetchPerPage {
+		nextCursor = nil
+		for i := 0; i <= len(questions)-1; i++ {
+			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+		}
+	} else {
+		nextCursor = &questions[len(questions)-1].Id
+		for i := 0; i <= fetchPerPage-1; i++ {
+			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+		}
 	}
+
+	
 
 	return &dto.FindQuestionsByUserIdResponse{
 		Data: questionsDTO,
+		Meta: dto.PageInfo{
+			NextCursor: nextCursor,
+			PrevCursor: prevCursor,
+		},
 	}
 }
