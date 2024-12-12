@@ -40,7 +40,7 @@ type Response struct {
 
 type Session struct {
 	UserID     uuid.UUID `gorm:"type:uuid"`
-	Token      string    `gorm:"unique;not null"`
+	Token      string    `gorm:"index:idx_unique_token;unique;not null"`
 	Issued_at  time.Time `gorm:"not null"`
 	Expired_at time.Time `gorm:"not null"`
 }
