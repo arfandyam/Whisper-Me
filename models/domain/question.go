@@ -8,4 +8,5 @@ type Question struct {
 	Slug     string
 	Topic    string
 	Question string
+	Rank     float64
 }

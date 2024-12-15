@@ -102,9 +102,9 @@ func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 
 func (controller *QuestionController) SearchQuestionsByKeyword(ctx *gin.Context){
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	cursor := ctx.Query("cursor")
+	rankQuery := ctx.Query("rank")
 	keyword := ctx.Query("keyword")
-	questionResponse := controller.QuestionService.SearchQuestionsByKeyword(ctx, accessToken, cursor, keyword)
+	questionResponse := controller.QuestionService.SearchQuestionsByKeyword(ctx, accessToken, keyword, rankQuery)
 
 	if len(ctx.Errors) > 0 {
 		return

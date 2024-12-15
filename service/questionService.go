@@ -1,13 +1,13 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
+	"github.com/arfandyam/Whisper-Me/libs/mapper"
 	"github.com/arfandyam/Whisper-Me/models/domain"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/repository"
@@ -190,60 +190,45 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 		}
 	}
 
-	fmt.Println("userId", userId)
-
-	tx := service.DB.Begin()
-	defer func(){
-		if r:= recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
 	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
-	questions, err := service.QuestionRepository.FindQuestionsByUserId(tx, userId, cursor, fetchPerPage)
+	questions, err := service.QuestionRepository.FindQuestionsByUserId(service.DB, userId, cursor, fetchPerPage)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)
-		tx.Rollback()
 		return nil
 	}
-	fmt.Println("questions", questions)
 
-	prevCursor, err := service.QuestionRepository.FindPrevCursorQuestion(tx, userId, cursor, fetchPerPage)
+	prevCursor, err := service.QuestionRepository.FindPrevCursorQuestion(service.DB, userId, cursor, fetchPerPage)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prevCursor", err.Error())
 		ctx.Error(err)
-		tx.Rollback()
 		return nil
 	}
-
-	tx.Commit()
 
 	var questionsDTO []dto.QuestionDTO
 	var nextCursor *uuid.UUID
 	if len(questions) <= fetchPerPage {
 		nextCursor = nil
 		for i := 0; i <= len(questions)-1; i++ {
-			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	} else {
 		nextCursor = &questions[len(questions)-1].Id
 		for i := 0; i <= fetchPerPage-1; i++ {
-			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	}
 	
 	return &dto.FindQuestionsByUserIdResponse{
 		Data: questionsDTO,
-		Meta: dto.PageInfo{
+		Meta: dto.PageCursorInfo{
 			NextCursor: nextCursor,
 			PrevCursor: prevCursor,
 		},
 	}
-	
 }
 
-func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, cursorUrl string, keyword string) *dto.FindQuestionsByUserIdResponse {
+func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, keyword string, rankQuery string) *dto.SearchKeywordQuestionsByUserIdResponse {
 	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
@@ -253,58 +238,47 @@ func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, acces
 
 	userId := uuid.Must(uuid.Parse(claimsId))
 
-	var cursor *uuid.UUID
-	if cursorUrl != "" {
-		parsedUUID := uuid.MustParse(cursorUrl)
-		cursor = &parsedUUID
+	var rank *float64
+	if rankQuery != "" {
+		parsedRank, _ := strconv.ParseFloat(rankQuery, 64)
+		rank = &parsedRank
 	}
 
 	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
-	tx := service.DB.Begin()
-	defer func(){
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
 
-	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(tx, userId, cursor, keyword, fetchPerPage)
+	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(service.DB, userId, fetchPerPage, keyword, rank)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)
-		tx.Rollback()
 		return nil
 	}
 
-	// fmt.Println("questions from service:", questions)
-	prevCursor, err := service.QuestionRepository.FindPrevCursorQuestion(tx, userId, cursor, fetchPerPage)
+	prevRank, err := service.QuestionRepository.FindPrevRankQuestion(service.DB, userId, fetchPerPage, keyword, rank)
 	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prevCursor", err.Error())
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prev rank", err.Error())
 		ctx.Error(err)
-		tx.Rollback()
 		return nil
 	}
 
 	var questionsDTO []dto.QuestionDTO
-	var nextCursor *uuid.UUID
+	var nextRank *float64
 	if len(questions) <= fetchPerPage {
-		nextCursor = nil
-		for i := 0; i <= len(questions)-1; i++ {
-			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+		nextRank = nil
+		for i := 0; i < len(questions); i++ {
+			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	} else {
-		nextCursor = &questions[len(questions)-1].Id
-		for i := 0; i <= fetchPerPage-1; i++ {
-			questionsDTO = append(questionsDTO, dto.QuestionDTO(questions[i]))
+		nextRank = &questions[len(questions)-1].Rank
+		for i := 0; i < fetchPerPage; i++ {
+			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	}
 
-	
-
-	return &dto.FindQuestionsByUserIdResponse{
+	return &dto.SearchKeywordQuestionsByUserIdResponse{
 		Data: questionsDTO,
-		Meta: dto.PageInfo{
-			NextCursor: nextCursor,
-			PrevCursor: prevCursor,
+		Meta: dto.PageRankInfo{
+			NextRank: nextRank,
+			PrevRank: prevRank,
 		},
 	}
 }

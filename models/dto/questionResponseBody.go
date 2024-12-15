@@ -28,13 +28,14 @@ type FindQuestionResponse struct {
 	Question string    `json:"question"`
 }
 
-type PageInfo struct {
-	NextCursor *uuid.UUID `json:"next_cursor"`
-	PrevCursor *uuid.UUID `json:"prev_cursor"`
-}
-
 type FindQuestionsByUserIdResponse struct {
 	*Response
+	Data []QuestionDTO  `json:"data"`
+	Meta PageCursorInfo `json:"meta"`
+}
+
+type SearchKeywordQuestionsByUserIdResponse struct {
+	*Response
 	Data []QuestionDTO `json:"data"`
-	Meta PageInfo `json:"meta"`
+	Meta PageRankInfo  `json:"meta"`
 }
