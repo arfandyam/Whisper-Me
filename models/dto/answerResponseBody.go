@@ -1,9 +1,8 @@
 package dto
 
 import (
-	"time"
-
 	"github.com/google/uuid"
+	"time"
 )
 
 type ResponseDTO struct {
@@ -30,4 +29,11 @@ type CreateEditAnswerResponse struct {
 type FindAnswerResponse struct {
 	*Response
 	Data []FullResponseDTO `json:"data"`
+	Meta PageCursorInfo      `json:"meta"`
+}
+
+type SearchKeywordResponseByUserIdResponse struct {
+	*Response
+	Data []FullResponseDTO `json:"data"`
+	Meta PageRankInfo      `json:"meta"`
 }

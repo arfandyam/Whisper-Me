@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
+	"github.com/arfandyam/Whisper-Me/libs/mapper"
 	"github.com/arfandyam/Whisper-Me/models/domain"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/repository"
@@ -64,26 +64,14 @@ func (service *ResponseService) CreateResponse(ctx *gin.Context, request *dto.Cr
 	tx.Commit()
 
 	return &dto.CreateEditAnswerResponse{
-		Data: dto.ResponseDTO{
-			Id:         response.Id,
-			QuestionId: response.QuestionId,
-			Response:   response.Response,
-		},
+		Data: mapper.MapResponseDomainToResponseDTO(*response),
 	}
 }
 
-func (service *ResponseService) FindResponseByQuestionId(ctx *gin.Context, questionId uuid.UUID, page int, accessToken string) *dto.FindAnswerResponse {
-	tx := service.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	userId, err := service.QuestionRepository.FindQuestionOwner(tx, questionId)
+func (service *ResponseService) FindResponseByQuestionId(ctx *gin.Context, questionId uuid.UUID, cursorUrl string, accessToken string) *dto.FindAnswerResponse {
+	userId, err := service.QuestionRepository.FindQuestionOwner(service.DB, questionId)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusNotFound, "Failed to fetch user id", err.Error())
-		tx.Rollback()
 		ctx.Error(err)
 		return nil
 	}
@@ -97,68 +85,11 @@ func (service *ResponseService) FindResponseByQuestionId(ctx *gin.Context, quest
 
 	userIdFromClaims := uuid.MustParse(claimsId)
 
-	if userIdFromClaims != *userId {
-		err := exceptions.NewCustomError(http.StatusUnauthorized, "Unauthorized", "Source not allowed to access")
-		ctx.Error(err)
-		return nil
+	var cursor *uuid.UUID
+	if cursorUrl != "" {
+		fetchedCursor := uuid.MustParse(cursorUrl)
+		cursor = &fetchedCursor
 	}
-
-	fetchPerPage := 10
-	offset := (page - 1) * fetchPerPage
-
-	responses, err := service.ResponseRepository.FindResponseByQuestionId(tx, questionId, fetchPerPage, offset)
-	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch responses/answers", err.Error())
-		tx.Rollback()
-		ctx.Error(err)
-		return nil
-	}
-
-	var responsesDTO []dto.FullResponseDTO
-	for i:=0; i < len(responses); i++ {
-		responsesDTO = append(responsesDTO, dto.FullResponseDTO{
-			ResponseDTO: dto.ResponseDTO{
-				Id: responses[i].Id,
-				QuestionId: responses[i].QuestionId,
-				Response: responses[i].Response,
-			},
-
-			ResponseTimestampDTO: dto.ResponseTimestampDTO{
-				CreatedAt: responses[i].CreatedAt,
-				UpdatedAt: responses[i].UpdatedAt,
-			},
-		})
-	}
-
-	return &dto.FindAnswerResponse{
-		Data: responsesDTO,
-	}
-}
-
-func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, keyword string, page int, accessToken string) *dto.FindAnswerResponse {
-	tx := service.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	userId, err := service.QuestionRepository.FindQuestionOwner(tx, questionId)
-	if err != nil {
-		err := exceptions.NewCustomError(http.StatusNotFound, "Failed to fetch user id", err.Error())
-		tx.Rollback()
-		ctx.Error(err)
-		return nil
-	}
-
-	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
-	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to verify token", err.Error())
-		ctx.Error(err)
-		return nil
-	}
-
-	userIdFromClaims := uuid.MustParse(claimsId)
 
 	if userIdFromClaims != *userId {
 		err := exceptions.NewCustomError(http.StatusUnauthorized, "Unauthorized", "Source not allowed to access")
@@ -167,34 +98,104 @@ func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, quest
 	}
 
 	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
-	responses, err := service.ResponseRepository.SearchResponsesByKeyword(tx, keyword, questionId, fetchPerPage, libs.CalculateOffset(page, fetchPerPage))
-
+	responses, err := service.ResponseRepository.FindResponseByQuestionId(service.DB, questionId, fetchPerPage, cursor)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch responses/answers", err.Error())
-		tx.Rollback()
 		ctx.Error(err)
 		return nil
 	}
 
-	var responsesDTO []dto.FullResponseDTO
-	for i:=0; i < len(responses); i++ {
-		responsesDTO = append(responsesDTO, dto.FullResponseDTO{
-			ResponseDTO: dto.ResponseDTO{
-				Id: responses[i].Id,
-				QuestionId: responses[i].QuestionId,
-				Response: responses[i].Response,
-			},
+	prevCursor, err := service.ResponseRepository.FindPrevCursorResponse(service.DB, questionId, fetchPerPage, cursor)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch previous cursor", err.Error())
+		ctx.Error(err)
+		return nil
+	}
 
-			ResponseTimestampDTO: dto.ResponseTimestampDTO{
-				CreatedAt: responses[i].CreatedAt,
-				UpdatedAt: responses[i].UpdatedAt,
-			},
-		})
+	var nextCursor *uuid.UUID
+	var responsesDTO []dto.FullResponseDTO
+	if len(responses) <= fetchPerPage {
+		for i := 0; i < len(responses); i++ {
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+		}
+		nextCursor = nil
+	} else {
+		for i := 0; i < fetchPerPage; i++ {
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+		}
+		nextCursor = &responses[len(responses)-1].Id
 	}
 
 	return &dto.FindAnswerResponse{
 		Data: responsesDTO,
+		Meta: dto.PageCursorInfo{
+			NextCursor: nextCursor,
+			PrevCursor: prevCursor,
+		},
 	}
 }
 
+func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, accessToken string,keyword string, rankQuery string) *dto.SearchKeywordResponseByUserIdResponse {
+	userId, err := service.QuestionRepository.FindQuestionOwner(service.DB, questionId)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusNotFound, "Failed to fetch user id", err.Error())
+		ctx.Error(err)
+		return nil
+	}
 
+	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to verify token", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	userIdFromClaims := uuid.MustParse(claimsId)
+	if userIdFromClaims != *userId {
+		err := exceptions.NewCustomError(http.StatusUnauthorized, "Unauthorized", "Source not allowed to access")
+		ctx.Error(err)
+		return nil
+	}
+
+	var rank *float64
+	if rankQuery != "" {
+		parsedRank, _ := strconv.ParseFloat(rankQuery, 64)
+		rank = &parsedRank
+	}
+
+	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
+	responses, err := service.ResponseRepository.SearchResponsesByKeyword(service.DB, questionId, fetchPerPage, keyword, rank)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch responses/answers", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+	prevRank, err := service.ResponseRepository.FindPrevRankResponse(service.DB, questionId, fetchPerPage, keyword, rank)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prev rank response/answer", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	var nextRank *float64
+	var responsesDTO []dto.FullResponseDTO
+	if len(responses) <= fetchPerPage {
+		for i := 0; i < len(responses); i++ {
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+		}
+		nextRank = nil
+	} else {
+		for i := 0; i < fetchPerPage; i++ {
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+		}
+		nextRank = &responses[len(responses)-1].Rank
+	}
+
+	return &dto.SearchKeywordResponseByUserIdResponse{
+		Data: responsesDTO,
+		Meta: dto.PageRankInfo{
+			NextRank: nextRank,
+			PrevRank: prevRank,
+		},
+	}
+}

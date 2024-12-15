@@ -8,6 +8,6 @@ import (
 
 type ResponseServiceInterface interface {
 	CreateResponse(ctx *gin.Context, request *dto.CreateEditAnswerRequestBody) *dto.CreateEditAnswerResponse
-	FindResponseByQuestionId(ctx *gin.Context, questionId uuid.UUID, page int, accessToken string) *dto.FindAnswerResponse
-	SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, keyword string, page int, accessToken string) *dto.FindAnswerResponse
+	FindResponseByQuestionId(ctx *gin.Context, questionId uuid.UUID, accessToken string, cursorUrl string) *dto.FindAnswerResponse
+	SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, accessToken string, keyword string, rankQuery string) *dto.SearchKeywordResponseByUserIdResponse
 }

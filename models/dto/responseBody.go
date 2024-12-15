@@ -11,3 +11,13 @@ type CreateResponse struct {
 	*Response
 	Id uuid.UUID `json:"id"`
 }
+
+type PageCursorInfo struct {
+	NextCursor *uuid.UUID `json:"next_cursor"`
+	PrevCursor *uuid.UUID `json:"prev_cursor"`
+}
+
+type PageRankInfo struct {
+	NextRank *float64 `json:"next_rank"`
+	PrevRank *float64 `json:"prev_rank"`
+}

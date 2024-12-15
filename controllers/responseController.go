@@ -2,9 +2,7 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
-
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/arfandyam/Whisper-Me/service"
 	"github.com/gin-gonic/gin"
@@ -39,16 +37,10 @@ func (controller *ResponseController) CreateResponse(ctx *gin.Context){
 
 func (controller *ResponseController) FindResponseByQuestionId(ctx *gin.Context){
 	questionId := uuid.MustParse(ctx.Param("questionId"))
-	page, err := strconv.Atoi(ctx.Query("page"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status": "failed",
-			"message": "invalid page query",
-		})
-	}
+	cursorUrl := ctx.Query("cursor")
 
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	answerResponse := controller.ResponseService.FindResponseByQuestionId(ctx, questionId, page, accessToken)
+	answerResponse := controller.ResponseService.FindResponseByQuestionId(ctx, questionId, cursorUrl, accessToken)
 
 	if len(ctx.Errors) > 0 || answerResponse == nil {
 		return
@@ -64,17 +56,11 @@ func (controller *ResponseController) FindResponseByQuestionId(ctx *gin.Context)
 
 func (controller *ResponseController) SearchResponsesByKeyword(ctx *gin.Context){
 	questionId := uuid.MustParse(ctx.Param("questionId"))
-	page, err := strconv.Atoi(ctx.Query("page"))
 	keyword := ctx.Query("keyword")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status": "failed",
-			"message": "invalid page query",
-		})
-	}
+	rankQuery := ctx.Query("rank")
 
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, keyword, page, accessToken)
+	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, accessToken, keyword, rankQuery)
 
 	if len(ctx.Errors) > 0 || answerResponse == nil {
 		return
