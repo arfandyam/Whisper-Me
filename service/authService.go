@@ -120,7 +120,7 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 		return nil
 	}
 
-	userId, err := uuid.Parse(claimsId)
+	userId, _ := uuid.Parse(claimsId)
 
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
 	accessToken, iat, exp, err := service.TokenManager.GenerateToken(userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
