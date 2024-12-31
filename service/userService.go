@@ -2,8 +2,6 @@ package service
 
 import (
 	"fmt"
-	"net/http"
-	"os"
 	"github.com/arfandyam/Whisper-Me/libs"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/models/domain"
@@ -13,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"net/http"
+	"os"
 )
 
 type UserService struct {
@@ -32,41 +32,46 @@ func NewUserService(userRepository repository.UserRepositoryInterface, tokenMana
 func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *dto.UserCreateRequest) *dto.CreateResponse {
 	// Create Id
 	userId := uuid.New()
-
-	// Hashing Password
-	password, err := libs.HashPassword(request.Password)
-	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to hash password", err.Error())
-		ctx.Error(err)
-		return nil
-	}
-
 	user := &domain.User{
-		Id:          userId,
-		Firstname:   request.Firstname,
-		Lastname:    request.Lastname,
-		Username:    request.Username,
-		Email:       request.Email,
-		Password:    &password,
+		Id:        userId,
+		Firstname: request.Firstname,
+		Lastname:  request.Lastname,
+		Username:  request.Username,
+		Email:     request.Email,
+		// Password:    &password,
 		Oauth_id:    nil,
 		Is_oauth:    false,
 		Is_verified: false,
 	}
 
-	// tx := service.DB.Begin()
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		tx.Rollback()
-	// 	}
-	// }()
+	// Hashing Password
+	hashedPasswordChan := make(chan string)
+	errChan := make(chan error)
 
-	user, err = service.UserRepository.CreateUser(tx, user)
+	go func(password string, ch chan string, errCh chan error) {
+		hashedPassword, err := libs.HashPassword(request.Password)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		ch <- hashedPassword
+	}(request.Password, hashedPasswordChan, errChan)
+
+	select {
+	case hashedPassword := <-hashedPasswordChan:
+		user.Password = &hashedPassword
+	case err := <-errChan:
+		err = exceptions.NewCustomError(http.StatusBadRequest, "Failed to hash password", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	user, err := service.UserRepository.CreateUser(tx, user)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "User failed to add", err.Error())
 		ctx.Error(err)
 		return nil
 	}
-	// tx.Commit()
 
 	return &dto.CreateResponse{
 		Id: user.Id,
@@ -191,7 +196,7 @@ func (service *UserService) ChangePassword(ctx *gin.Context, request *dto.UserCh
 	tx.Commit()
 }
 
-func (service *UserService) VerifyUsersEmail(ctx *gin.Context, queryToken string){
+func (service *UserService) VerifyUsersEmail(ctx *gin.Context, queryToken string) {
 	email, err := service.TokenManager.VerifyToken(queryToken, os.Getenv("EMAIL_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to parse token", err.Error())
@@ -200,7 +205,7 @@ func (service *UserService) VerifyUsersEmail(ctx *gin.Context, queryToken string
 	}
 
 	tx := service.DB.Begin()
-	defer func(){
+	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
