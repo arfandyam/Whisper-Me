@@ -21,7 +21,7 @@ func main() {
 	db := initializers.ConnDB()
 	r := gin.Default()
 
-
+	r.Use(corsMiddleware())
 	r.Use(GlobalErrorHandler())
 
 	//App Oauth Config
