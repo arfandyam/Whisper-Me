@@ -93,10 +93,19 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 	tx.Commit()
 
 	return &dto.AuthResponseBody{
-		AccessToken:    accessToken,
-		AccessTokenIat: *accessTokenIat,
-		AccessTokenExp: *accessTokenExp,
-		RefreshToken:   refreshToken,
+		Data: dto.AuthUserInfo{
+			Id: user.Id,
+			Username: user.Username,
+			Firstname: user.Firstname,
+			Lastname: user.Lastname,
+			Email: user.Email,
+			Is_oauth: user.Is_oauth,
+			Is_verified: user.Is_verified,
+			AccessToken: accessToken,
+			AccessTokenIat: *accessTokenIat,
+			AccessTokenExp: *accessTokenExp,
+			RefreshToken: refreshToken,
+		},
 	}
 }
 
@@ -231,9 +240,16 @@ func (service *AuthService) OauthLoginUser(ctx *gin.Context, request *dto.UserCr
 	tx.Commit()
 
 	return &dto.AuthResponseBody{
-		AccessToken:    accessToken,
-		AccessTokenIat: *accessTokenIat,
-		AccessTokenExp: *accessTokenExp,
-		RefreshToken:   refreshToken,
+		Data: dto.AuthUserInfo{
+			Id: user.Id,
+			Username: user.Username,
+			Firstname: user.Firstname,
+			Lastname: user.Lastname,
+			Email: user.Email,
+			AccessToken: accessToken,
+			AccessTokenIat: *accessTokenIat,
+			AccessTokenExp: *accessTokenExp,
+			RefreshToken: refreshToken,
+		},
 	}
 }
