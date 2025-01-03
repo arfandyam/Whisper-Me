@@ -51,6 +51,10 @@ func (controller *AuthController) UpdateAccessToken(ctx *gin.Context) {
 		return
 	}
 
+	authResponse.Response = &dto.Response{
+		Status:  "success",
+		Message: "berhasil memperbarui access token",
+	}
 	ctx.JSON(http.StatusOK, authResponse)
 }
 

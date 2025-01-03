@@ -25,8 +25,12 @@ type AuthResponseBody struct {
 }
 
 type AccessTokenResponseBody struct {
-	*Response
-	AccessToken    string          `json:"accesstoken"`
+	AccessToken    string          `json:"access_token"`
 	AccessTokenIat jwt.NumericDate `json:"access_token_iat"`
 	AccessTokenExp jwt.NumericDate `json:"access_token_exp"`
+}
+
+type UpdateAccessTokenResponseBody struct {
+	*Response
+	Data AccessTokenResponseBody `json:"data"`
 }

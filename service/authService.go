@@ -94,22 +94,22 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 
 	return &dto.AuthResponseBody{
 		Data: dto.AuthUserInfo{
-			Id: user.Id,
-			Username: user.Username,
-			Firstname: user.Firstname,
-			Lastname: user.Lastname,
-			Email: user.Email,
-			Is_oauth: user.Is_oauth,
-			Is_verified: user.Is_verified,
-			AccessToken: accessToken,
+			Id:             user.Id,
+			Username:       user.Username,
+			Firstname:      user.Firstname,
+			Lastname:       user.Lastname,
+			Email:          user.Email,
+			Is_oauth:       user.Is_oauth,
+			Is_verified:    user.Is_verified,
+			AccessToken:    accessToken,
 			AccessTokenIat: *accessTokenIat,
 			AccessTokenExp: *accessTokenExp,
-			RefreshToken: refreshToken,
+			RefreshToken:   refreshToken,
 		},
 	}
 }
 
-func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.RefreshTokenRequestBody) *dto.AccessTokenResponseBody {
+func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.RefreshTokenRequestBody) *dto.UpdateAccessTokenResponseBody {
 	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
 		ctx.Error(err)
@@ -139,10 +139,12 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 		return nil
 	}
 
-	return &dto.AccessTokenResponseBody{
-		AccessToken:    accessToken,
-		AccessTokenIat: *iat,
-		AccessTokenExp: *exp,
+	return &dto.UpdateAccessTokenResponseBody{
+		Data: dto.AccessTokenResponseBody{
+			AccessToken:    accessToken,
+			AccessTokenIat: *iat,
+			AccessTokenExp: *exp,
+		},
 	}
 }
 
@@ -167,7 +169,7 @@ func (service *AuthService) LogoutUser(ctx *gin.Context, request *dto.RefreshTok
 		ctx.Error(err)
 		return
 	}
-	
+
 	tx.Commit()
 }
 
@@ -241,15 +243,15 @@ func (service *AuthService) OauthLoginUser(ctx *gin.Context, request *dto.UserCr
 
 	return &dto.AuthResponseBody{
 		Data: dto.AuthUserInfo{
-			Id: user.Id,
-			Username: user.Username,
-			Firstname: user.Firstname,
-			Lastname: user.Lastname,
-			Email: user.Email,
-			AccessToken: accessToken,
+			Id:             user.Id,
+			Username:       user.Username,
+			Firstname:      user.Firstname,
+			Lastname:       user.Lastname,
+			Email:          user.Email,
+			AccessToken:    accessToken,
 			AccessTokenIat: *accessTokenIat,
 			AccessTokenExp: *accessTokenExp,
-			RefreshToken: refreshToken,
+			RefreshToken:   refreshToken,
 		},
 	}
 }
