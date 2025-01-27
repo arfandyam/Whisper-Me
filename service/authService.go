@@ -105,6 +105,8 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 			AccessTokenIat: *accessTokenIat,
 			AccessTokenExp: *accessTokenExp,
 			RefreshToken:   refreshToken,
+			RefreshTokenIat: *refreshTokenIat,
+			RefreshTokenExp: *refreshTokenExp,
 		},
 	}
 }
@@ -124,7 +126,7 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 
 	claimsId, err := service.TokenManager.VerifyToken(request.RefreshToken, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
 	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token is invalid.", err.Error())
 		ctx.Error(err)
 		return nil
 	}
@@ -134,7 +136,7 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
 	accessToken, iat, exp, err := service.TokenManager.GenerateToken(userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to generate access token.", err.Error())
 		ctx.Error(err)
 		return nil
 	}

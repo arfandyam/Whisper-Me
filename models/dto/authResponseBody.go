@@ -17,6 +17,8 @@ type AuthUserInfo struct {
 	AccessTokenIat jwt.NumericDate `json:"access_token_iat"`
 	AccessTokenExp jwt.NumericDate `json:"access_token_exp"`
 	RefreshToken   string          `json:"refresh_token"`
+	RefreshTokenIat jwt.NumericDate `json:"refresh_token_iat"`
+	RefreshTokenExp jwt.NumericDate `json:"refresh_token_exp"`
 }
 
 type AuthResponseBody struct {
