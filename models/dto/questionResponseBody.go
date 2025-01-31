@@ -1,13 +1,18 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"time"
+	"github.com/google/uuid"
+)
 
 type QuestionDTO struct {
-	Id       uuid.UUID `json:"id"`
-	UserId   uuid.UUID `json:"user_id"`
-	Slug     string    `json:"slug"`
-	Topic    string    `json:"topic"`
-	Question string    `json:"question"`
+	Id        uuid.UUID `json:"id"`
+	UserId    uuid.UUID `json:"user_id"`
+	Slug      string    `json:"slug"`
+	Topic     string    `json:"topic"`
+	Question  string    `json:"question"`
+	UrlKey    string    `json:"url_key"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type CreateEditQuestionResponse struct {

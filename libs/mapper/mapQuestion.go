@@ -12,5 +12,7 @@ func MapQuestionDomainToQuestionDTO(questions domain.Question) dto.QuestionDTO {
 		Slug: questions.Slug,
 		Topic: questions.Topic,
 		Question: questions.Question,
+		UrlKey: questions.UrlKey,
+		CreatedAt: questions.CreatedAt,
 	}
 }

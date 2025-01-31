@@ -3,9 +3,11 @@ package libs
 import (
 	"bytes"
 	"html/template"
+	"math"
+	"math/rand"
 	"strings"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func HashPassword(password string) (string, error) {
@@ -43,16 +45,50 @@ func ToSlug(itemString string, itemId uuid.UUID) string {
 	var slugTrim strings.Builder
 	for i := 0; i < len(slug); i++ {
 		char := slug[i]
-		if ('a' <= char && char <= 'z') ||('A' <= char && char <= 'Z') ||('0' <= char && char <= '9') || char == ' ' || char == '-'{
+		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || ('0' <= char && char <= '9') || char == ' ' || char == '-' {
 			slugTrim.WriteByte(char)
 		}
 	}
 
 	slug = slugTrim.String() + "-" + itemId.String()[:13]
-
 	return slug
 }
 
 func CalculateOffset(page int, fetchPerPage int) int {
-	return (page-1) * fetchPerPage
+	return (page - 1) * fetchPerPage
+}
+
+func SlugToBase62(slug string) string {
+	numericString := 1
+	for _, char := range slug {
+		if int(char) >= 48 && int(char) <= 57 {
+			numericString += (int(char) - 48)
+		} else if int(char) >= 65 && int(char) <= 90 {
+			numericString += (int(char) - 65 + 11)
+		} else if int(char) >= 97 && int(char) <= 122 {
+			numericString += (int(char) - 97 + 37)
+		} else if int(char) == 45 {
+		    numericString += (int(char) - 45 + 63)
+		}
+	}
+
+	salt := int(math.Ceil(rand.Float64()*1500)*50*25)
+	numericString *= salt
+
+	return Base62Encode(numericString)
+}
+
+func Base62Encode(num int) string {
+	base62Chars := "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	base := 62
+	result := ""
+
+	for num > 0 {
+		var remainder int
+		num = num / base
+		remainder = num % base
+		result = string(base62Chars[remainder]) + result
+	}
+
+	return result
 }

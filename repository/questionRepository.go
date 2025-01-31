@@ -47,18 +47,29 @@ func (repository *QuestionRepository) FindQuestionById(tx *gorm.DB, questionId u
 	return question, nil
 }
 
+func (repository *QuestionRepository) FindQuestionBySlug(tx *gorm.DB, questionSlug string) (*domain.Question, error) {
+	question := &domain.Question{}
+	sql := "SELECT id, user_id, slug, topic, question FROM questions WHERE slug = ?"
+
+	if err := tx.Raw(sql, questionSlug).First(question).Error; err != nil {
+		return nil, err
+	}
+
+	return question, nil
+}
+
 func (repository *QuestionRepository) FindQuestionsByUserId(tx *gorm.DB, userId uuid.UUID, cursor *uuid.UUID, fetchPerPage int) ([]domain.Question, error) {
 	questions := []domain.Question{}
 	var sql string
 	var rows *gorm.DB
 	if cursor == nil {
-		sql = `SELECT id, user_id, slug, topic, question 
+		sql = `SELECT id, user_id, slug, topic, question, url_key, created_at 
 		FROM questions WHERE user_id = ? 
 		ORDER BY id ASC 
 		LIMIT ?`
 		rows = tx.Raw(sql, userId, fetchPerPage+1)
 	} else {
-		sql = `SELECT id, user_id, slug, topic, question 
+		sql = `SELECT id, user_id, slug, topic, question, url_key, created_at 
 		FROM questions 
 		WHERE user_id = ? AND id >= ?
 		ORDER BY id ASC
