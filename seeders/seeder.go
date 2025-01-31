@@ -29,10 +29,6 @@ func main() {
 		return
 	}
 
-	// options := tables.Options{
-	// 	Amount: amount,
-	// 	UserId: uuid.MustParse(*userIdFlag),
-	// }
 	switch {
 	case *tableFlag == "questions":
 		tables.AddQuestions(initializers.DB, tables.Options{
