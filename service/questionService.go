@@ -55,12 +55,14 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 	questionId := uuid.New()
 	slug := libs.ToSlug(request.Topic, questionId)
 
+
 	question := &domain.Question{
 		Id:       questionId,
 		UserId:   userId,
 		Slug:     slug,
 		Topic:    request.Topic,
 		Question: request.Question,
+		UrlKey: libs.SlugToBase62(slug),
 	}
 
 	tx := service.DB.Begin()

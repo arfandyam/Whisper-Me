@@ -15,9 +15,9 @@ func NewQuestionRepository() QuestionRepositoryInterface {
 }
 
 func (repository *QuestionRepository) CreateQuestion(tx *gorm.DB, question *domain.Question) (*domain.Question, error) {
-	sql := "INSERT INTO questions (id, user_id, slug, topic, question, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, NOW(), ? ,?) RETURNING id, user_id, slug, topic, question"
+	sql := "INSERT INTO questions (id, user_id, slug, topic, question, url_key, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), ? ,?) RETURNING id, user_id, slug, topic, question"
 
-	rows := tx.Raw(sql, question.Id, question.UserId, question.Slug, question.Topic, question.Question, nil, nil).Row()
+	rows := tx.Raw(sql, question.Id, question.UserId, question.Slug, question.Topic, question.Question, question.UrlKey, nil, nil).Row()
 	if err := rows.Scan(&question.Id, &question.UserId, &question.Slug, &question.Topic, &question.Question); err != nil {
 		return nil, err
 	}

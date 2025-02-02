@@ -38,7 +38,6 @@ func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *d
 		Lastname:  request.Lastname,
 		Username:  request.Username,
 		Email:     request.Email,
-		// Password:    &password,
 		Oauth_id:    nil,
 		Is_oauth:    false,
 		Is_verified: false,

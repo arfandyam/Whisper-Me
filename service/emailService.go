@@ -8,7 +8,6 @@ import (
 	"net/smtp"
 	"os"
 	"path/filepath"
-
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/models/dto"
 	"github.com/gin-gonic/gin"
