@@ -55,14 +55,13 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 	questionId := uuid.New()
 	slug := libs.ToSlug(request.Topic, questionId)
 
-
 	question := &domain.Question{
 		Id:       questionId,
 		UserId:   userId,
 		Slug:     slug,
 		Topic:    request.Topic,
 		Question: request.Question,
-		UrlKey: libs.SlugToBase62(slug),
+		UrlKey:   libs.SlugToBase62(slug),
 	}
 
 	tx := service.DB.Begin()
@@ -162,11 +161,43 @@ func (service *QuestionService) FindQuestionById(ctx *gin.Context, accessToken s
 	}
 
 	return &dto.FindQuestionResponse{
-		Id:       question.Id,
-		UserId:   question.UserId,
-		Slug:     question.Slug,
-		Topic:    question.Topic,
-		Question: question.Question,
+		Data: dto.QuestionDTO{
+			Id:        question.Id,
+			UserId:    question.UserId,
+			Slug:      question.Slug,
+			Topic:     question.Topic,
+			Question:  question.Question,
+			UrlKey:    question.UrlKey,
+			CreatedAt: question.CreatedAt,
+		},
+	}
+}
+
+func (service *QuestionService) FindQuestionBySlug(ctx *gin.Context, accessToken string, slug string) *dto.FindQuestionResponse {
+	_, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	question, err := service.QuestionRepository.FindQuestionBySlug(service.DB, slug)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "failed to fetch data", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	return &dto.FindQuestionResponse{
+		Data: dto.QuestionDTO{
+			Id:        question.Id,
+			UserId:    question.UserId,
+			Slug:      question.Slug,
+			Topic:     question.Topic,
+			Question:  question.Question,
+			UrlKey:    question.UrlKey,
+			CreatedAt: question.CreatedAt,
+		},
 	}
 }
 
@@ -220,7 +251,7 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	}
-	
+
 	return &dto.FindQuestionsByUserIdResponse{
 		Data: questionsDTO,
 		Meta: dto.PageCursorInfo{

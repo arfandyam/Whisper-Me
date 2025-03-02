@@ -80,6 +80,24 @@ func (controller *QuestionController) FindQuestionById(ctx *gin.Context){
 	ctx.JSON(http.StatusOK, questionResponse)
 }
 
+func (controller *QuestionController) FindQuestionBySlug(ctx *gin.Context){
+	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
+	questionSlug := ctx.Param("slug")
+
+	questionResponse := controller.QuestionService.FindQuestionBySlug(ctx, accessToken, questionSlug)
+
+	if len(ctx.Errors) > 0 {
+		return
+	}
+
+	questionResponse.Response = &dto.Response{
+		Status: "success",
+		Message: "Berhasil memperbarui data.",
+	}
+
+	ctx.JSON(http.StatusOK, questionResponse)
+}
+
 func (controller *QuestionController) FindQuestionsByUserId(ctx *gin.Context){
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
 	cursorUrl := ctx.Query("cursor")

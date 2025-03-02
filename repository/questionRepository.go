@@ -38,7 +38,7 @@ func (repository *QuestionRepository) EditQuestion(tx *gorm.DB, question *domain
 
 func (repository *QuestionRepository) FindQuestionById(tx *gorm.DB, questionId uuid.UUID) (*domain.Question, error) {
 	question := &domain.Question{}
-	sql := "SELECT id, user_id, slug, topic, question FROM questions WHERE id = ?"
+	sql := "SELECT id, user_id, slug, topic, question, url_key, created_at FROM questions WHERE id = ?"
 
 	if err := tx.Raw(sql, questionId).First(question).Error; err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (repository *QuestionRepository) FindQuestionById(tx *gorm.DB, questionId u
 
 func (repository *QuestionRepository) FindQuestionBySlug(tx *gorm.DB, questionSlug string) (*domain.Question, error) {
 	question := &domain.Question{}
-	sql := "SELECT id, user_id, slug, topic, question FROM questions WHERE slug = ?"
+	sql := "SELECT id, user_id, slug, topic, question, url_key, created_at FROM questions WHERE slug = ?"
 
 	if err := tx.Raw(sql, questionSlug).First(question).Error; err != nil {
 		return nil, err

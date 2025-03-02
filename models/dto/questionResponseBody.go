@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 type QuestionDTO struct {
@@ -26,11 +26,7 @@ type CreateEditQuestionResponse struct {
 
 type FindQuestionResponse struct {
 	*Response
-	Id       uuid.UUID `json:"id"`
-	UserId   uuid.UUID `json:"user_id"`
-	Slug     string    `json:"slug"`
-	Topic    string    `json:"topic"`
-	Question string    `json:"question"`
+	Data QuestionDTO `json:"data"`
 }
 
 type FindQuestionsByUserIdResponse struct {

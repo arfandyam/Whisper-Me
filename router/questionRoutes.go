@@ -10,7 +10,8 @@ func QuestionRoutes(route *gin.Engine, questionController controllers.QuestionCo
 	{
 		question.POST("", questionController.CreateQuestion)
 		question.PUT(":id", questionController.EditQuestion)
-		question.GET(":id", questionController.FindQuestionById)
+		// question.GET(":id", questionController.FindQuestionById)
+		question.GET(":slug", questionController.FindQuestionBySlug)
 		question.GET("", questionController.FindQuestionsByUserId)
 		question.GET("/search", questionController.SearchQuestionsByKeyword)
 	}
