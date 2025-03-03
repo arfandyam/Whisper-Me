@@ -82,11 +82,13 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 	tx.Commit()
 
 	return &dto.CreateEditQuestionResponse{
-		Id:       question.Id,
-		UserId:   question.UserId,
-		Slug:     question.Slug,
-		Topic:    question.Topic,
-		Question: question.Question,
+		Data: dto.QuestionDTO{
+			Id:       question.Id,
+			UserId:   question.UserId,
+			Slug:     question.Slug,
+			Topic:    question.Topic,
+			Question: question.Question,
+		},
 	}
 }
 
@@ -138,10 +140,15 @@ func (service *QuestionService) EditQuestion(ctx *gin.Context, accessToken strin
 	tx.Commit()
 
 	return &dto.CreateEditQuestionResponse{
-		Id:       question.Id,
-		Slug:     question.Slug,
-		Topic:    question.Topic,
-		Question: question.Question,
+		Data: dto.QuestionDTO{
+			Id:        question.Id,
+			UserId:    question.UserId,
+			Slug:      question.Slug,
+			Topic:     question.Topic,
+			Question:  question.Question,
+			UrlKey:    question.UrlKey,
+			CreatedAt: question.CreatedAt,
+		},
 	}
 }
 

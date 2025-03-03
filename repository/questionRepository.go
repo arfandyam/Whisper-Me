@@ -26,10 +26,10 @@ func (repository *QuestionRepository) CreateQuestion(tx *gorm.DB, question *doma
 }
 
 func (repository *QuestionRepository) EditQuestion(tx *gorm.DB, question *domain.Question) (*domain.Question, error) {
-	sql := "UPDATE questions SET slug = ?, topic = ?, question = ?, updated_at = NOW() WHERE id = ? RETURNING id, slug, topic, question"
+	sql := "UPDATE questions SET slug = ?, topic = ?, question = ?, updated_at = NOW() WHERE id = ? RETURNING id, user_id, slug, topic, question, url_key, created_at"
 
 	rows := tx.Raw(sql, question.Slug, question.Topic, question.Question, question.Id).Row()
-	if err := rows.Scan(&question.Id, &question.Slug, &question.Topic, &question.Question); err != nil {
+	if err := rows.Scan(&question.Id, &question.UserId, &question.Slug, &question.Topic, &question.Question, &question.UrlKey, &question.CreatedAt); err != nil {
 		return nil, err
 	}
 
@@ -151,7 +151,7 @@ func (repository *QuestionRepository) FindPrevRankQuestion(tx *gorm.DB, userId u
 	WHERE user_id = ? AND ts_rank(question_vector, plainto_tsquery(?)) > ?
 	ORDER BY ts_rank(question_vector, plainto_tsquery(?)) ASC
 	LIMIT ?`
-	
+
 	rows := tx.Raw(sql, keyword, userId, keyword, rank, keyword, fetchPerPage)
 
 	if err := rows.Scan(&prevDatas).Error; err != nil {

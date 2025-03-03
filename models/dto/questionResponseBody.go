@@ -17,11 +17,7 @@ type QuestionDTO struct {
 
 type CreateEditQuestionResponse struct {
 	*Response
-	Id       uuid.UUID `json:"id"`
-	UserId   uuid.UUID `json:"user_id"`
-	Slug     string    `json:"slug"`
-	Topic    string    `json:"topic"`
-	Question string    `json:"question"`
+	Data QuestionDTO `json:"data"`
 }
 
 type FindQuestionResponse struct {
