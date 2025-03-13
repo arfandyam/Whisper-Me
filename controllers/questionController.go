@@ -83,10 +83,9 @@ func (controller *QuestionController) FindQuestionById(ctx *gin.Context) {
 }
 
 func (controller *QuestionController) FindQuestionBySlug(ctx *gin.Context) {
-	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
 	questionSlug := ctx.Param("slug")
 
-	questionResponse := controller.QuestionService.FindQuestionBySlug(ctx, accessToken, questionSlug)
+	questionResponse := controller.QuestionService.FindQuestionBySlug(ctx, questionSlug)
 
 	if len(ctx.Errors) > 0 {
 		return

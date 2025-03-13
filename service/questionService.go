@@ -180,14 +180,7 @@ func (service *QuestionService) FindQuestionById(ctx *gin.Context, accessToken s
 	}
 }
 
-func (service *QuestionService) FindQuestionBySlug(ctx *gin.Context, accessToken string, slug string) *dto.FindQuestionResponse {
-	_, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
-	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
-		ctx.Error(err)
-		return nil
-	}
-
+func (service *QuestionService) FindQuestionBySlug(ctx *gin.Context, slug string) *dto.FindQuestionResponse {
 	question, err := service.QuestionRepository.FindQuestionBySlug(service.DB, slug)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "failed to fetch data", err.Error())
