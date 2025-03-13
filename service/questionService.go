@@ -322,3 +322,14 @@ func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, acces
 		},
 	}
 }
+
+func (service *QuestionService) FindQuestionSlugByUrlKey(ctx *gin.Context, urlKey string) *string {
+	slug, err := service.QuestionRepository.FindQuestionSlugByUrlKey(service.DB, urlKey)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "cannot find url key", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	return slug
+}

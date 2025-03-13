@@ -15,6 +15,10 @@ type QuestionDTO struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type QuestionSlug struct {
+	Slug string `json:"slug"`
+}
+
 type CreateEditQuestionResponse struct {
 	*Response
 	Data QuestionDTO `json:"data"`
@@ -35,4 +39,9 @@ type SearchKeywordQuestionsByUserIdResponse struct {
 	*Response
 	Data []QuestionDTO `json:"data"`
 	Meta PageRankInfo  `json:"meta"`
+}
+
+type FindQuestionSlugByUrlKey struct {
+	*Response
+	Data QuestionSlug `json:"data"`
 }

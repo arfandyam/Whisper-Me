@@ -177,3 +177,15 @@ func (repository *QuestionRepository) FindQuestionOwner(tx *gorm.DB, questionId 
 
 	return &userId, nil
 }
+
+func (repository *QuestionRepository) FindQuestionSlugByUrlKey(tx *gorm.DB, urlKey string) (*string, error) {
+	var slug string
+	sql := "SELECT slug FROM questions WHERE url_key = ?"
+
+	rows := tx.Raw(sql, urlKey).Row()
+	if err := rows.Scan(&slug); err != nil {
+		return nil, err
+	}
+
+	return &slug, nil
+}

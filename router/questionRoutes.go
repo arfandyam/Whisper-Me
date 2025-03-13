@@ -13,6 +13,7 @@ func QuestionRoutes(route *gin.Engine, questionController controllers.QuestionCo
 		// question.GET(":id", questionController.FindQuestionById)
 		question.GET(":slug", questionController.FindQuestionBySlug)
 		question.GET("", questionController.FindQuestionsByUserId)
+		question.GET("/r/:urlKey", questionController.ShortenUrl)
 		question.GET("/search", questionController.SearchQuestionsByKeyword)
 	}
 }

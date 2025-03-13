@@ -13,4 +13,6 @@ type QuestionServiceInterface interface {
 	FindQuestionBySlug(ctx *gin.Context, accessToken string, slug string) *dto.FindQuestionResponse
 	FindQuestionsByUserId(ctx *gin.Context, accessToken string, cursorUrl string) *dto.FindQuestionsByUserIdResponse
 	SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, keyword string, rankQuery string) *dto.SearchKeywordQuestionsByUserIdResponse
+	// FindQuestionSlugByUrlKey(ctx *gin.Context, urlKey string) *dto.FindQuestionSlugByUrlKey
+	FindQuestionSlugByUrlKey(ctx *gin.Context, urlKey string) *string
 }

@@ -9,4 +9,5 @@ type QuestionControllerInterface interface {
 	FindQuestionBySlug(ctx *gin.Context)
 	FindQuestionsByUserId(ctx *gin.Context)
 	SearchQuestionsByKeyword(ctx *gin.Context)
+	ShortenUrl(ctx *gin.Context)
 }

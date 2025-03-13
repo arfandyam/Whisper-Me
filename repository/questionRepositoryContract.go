@@ -16,4 +16,5 @@ type QuestionRepositoryInterface interface {
 	SearchQuestionsByKeyword(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) ([]domain.Question, error)
 	FindPrevRankQuestion(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) (*float64, error)
 	FindQuestionOwner(tx *gorm.DB, questionId uuid.UUID) (*uuid.UUID, error)
+	FindQuestionSlugByUrlKey(tx *gorm.DB, urlKey string) (*string, error)
 }
