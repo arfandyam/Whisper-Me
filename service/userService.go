@@ -33,11 +33,11 @@ func (service *UserService) CreateUser(ctx *gin.Context, tx *gorm.DB, request *d
 	// Create Id
 	userId := uuid.New()
 	user := &domain.User{
-		Id:        userId,
-		Firstname: request.Firstname,
-		Lastname:  request.Lastname,
-		Username:  request.Username,
-		Email:     request.Email,
+		Id:          userId,
+		Firstname:   request.Firstname,
+		Lastname:    request.Lastname,
+		Username:    request.Username,
+		Email:       request.Email,
 		Oauth_id:    nil,
 		Is_oauth:    false,
 		Is_verified: false,
@@ -129,11 +129,13 @@ func (service *UserService) FindUserById(ctx *gin.Context, userId uuid.UUID) *dt
 	}
 
 	return &dto.UserFindByIdResponse{
-		Id:        user.Id,
-		Username:  user.Username,
-		Firstname: user.Firstname,
-		Lastname:  user.Lastname,
-		Email:     user.Email,
+		Data: dto.UserDTO{
+			Id:        user.Id,
+			Username:  user.Username,
+			Firstname: user.Firstname,
+			Lastname:  user.Lastname,
+			Email:     user.Email,
+		},
 	}
 }
 
