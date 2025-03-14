@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/libs/mapper"
 	"github.com/arfandyam/Whisper-Me/models/domain"
@@ -32,7 +31,7 @@ func NewResponseService(responseRepository repository.ResponseRepositoryInterfac
 	}
 }
 
-func (service *ResponseService) CreateResponse(ctx *gin.Context, request *dto.CreateEditAnswerRequestBody) *dto.CreateEditAnswerResponse {
+func (service *ResponseService) CreateResponse(ctx *gin.Context, request *dto.CreateAnswerRequestBody, questionId uuid.UUID) *dto.CreateAnswerResponse {
 	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid request body", err.Error())
 		ctx.Error(err)
@@ -42,7 +41,7 @@ func (service *ResponseService) CreateResponse(ctx *gin.Context, request *dto.Cr
 	responseId := uuid.New()
 	response := &domain.Response{
 		Id:         responseId,
-		QuestionId: request.QuestionId,
+		QuestionId: questionId,
 		Response:   request.Response,
 	}
 
@@ -63,7 +62,7 @@ func (service *ResponseService) CreateResponse(ctx *gin.Context, request *dto.Cr
 
 	tx.Commit()
 
-	return &dto.CreateEditAnswerResponse{
+	return &dto.CreateAnswerResponse{
 		Data: mapper.MapResponseDomainToResponseDTO(*response),
 	}
 }
@@ -113,15 +112,15 @@ func (service *ResponseService) FindResponseByQuestionId(ctx *gin.Context, quest
 	}
 
 	var nextCursor *uuid.UUID
-	var responsesDTO []dto.FullResponseDTO
+	var responsesDTO []dto.ResponseDTO
 	if len(responses) <= fetchPerPage {
 		for i := 0; i < len(responses); i++ {
-			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToResponseDTO(responses[i]))
 		}
 		nextCursor = nil
 	} else {
 		for i := 0; i < fetchPerPage; i++ {
-			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToResponseDTO(responses[i]))
 		}
 		nextCursor = &responses[len(responses)-1].Id
 	}
@@ -178,15 +177,15 @@ func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, quest
 	}
 
 	var nextRank *float64
-	var responsesDTO []dto.FullResponseDTO
+	var responsesDTO []dto.ResponseDTO
 	if len(responses) <= fetchPerPage {
 		for i := 0; i < len(responses); i++ {
-			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToResponseDTO(responses[i]))
 		}
 		nextRank = nil
 	} else {
 		for i := 0; i < fetchPerPage; i++ {
-			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToFullResponseDTO(responses[i]))
+			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToResponseDTO(responses[i]))
 		}
 		nextRank = &responses[len(responses)-1].Rank
 	}

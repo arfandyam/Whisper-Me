@@ -6,10 +6,10 @@ import (
 )
 
 func ResponseRoute(route *gin.Engine, responseController controllers.ResponseControllerInterface){
-	response := route.Group("/response")
+	response := route.Group("/question/:questionId/response")
 	{
 		response.POST("", responseController.CreateResponse)
-		response.GET(":questionId", responseController.FindResponseByQuestionId)
-		response.GET(":questionId/search", responseController.SearchResponsesByKeyword)
+		response.GET("", responseController.FindResponseByQuestionId)
+		response.GET("/search", responseController.SearchResponsesByKeyword)
 	}
 }

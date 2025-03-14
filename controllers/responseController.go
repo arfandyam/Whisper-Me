@@ -20,8 +20,9 @@ func NewResponseController(responseService service.ResponseServiceInterface) Res
 }
 
 func (controller *ResponseController) CreateResponse(ctx *gin.Context){
-	request := &dto.CreateEditAnswerRequestBody{}
-	answerResponse := controller.ResponseService.CreateResponse(ctx, request)
+	questionId := uuid.Must(uuid.Parse(ctx.Param("questionId")))
+	request := &dto.CreateAnswerRequestBody{}
+	answerResponse := controller.ResponseService.CreateResponse(ctx, request, questionId)
 
 	if len(ctx.Errors) > 0 {
 		return
