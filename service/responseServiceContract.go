@@ -9,5 +9,5 @@ import (
 type ResponseServiceInterface interface {
 	CreateResponse(ctx *gin.Context, request *dto.CreateAnswerRequestBody, questionId uuid.UUID) *dto.CreateAnswerResponse
 	FindResponseByQuestionId(ctx *gin.Context, questionId uuid.UUID, accessToken string, cursorUrl string) *dto.FindAnswerResponse
-	SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, accessToken string, keyword string, rankQuery string) *dto.SearchKeywordResponseByUserIdResponse
+	SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, accessToken string, keyword string, rankQuery string, cursorUrl string) *dto.SearchKeywordResponseByUserIdResponse
 }

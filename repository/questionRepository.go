@@ -111,25 +111,26 @@ func (repository *QuestionRepository) FindPrevCursorQuestion(tx *gorm.DB, userId
 	return &prevCursor, nil
 }
 
-func (repository *QuestionRepository) SearchQuestionsByKeyword(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) ([]domain.Question, error) {
+func (repository *QuestionRepository) SearchQuestionsByKeyword(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64, cursor *uuid.UUID) ([]domain.Question, error) {
 	var sql string
 	var rows *gorm.DB
 	questions := []domain.Question{}
 
-	if rank == nil {
-		sql = `SELECT id, user_id, slug, topic, question, ts_rank(question_vector, plainto_tsquery(?)) AS rank
+	if rank == nil || cursor == nil {
+		sql = `SELECT id, user_id, slug, topic, question, url_key, ts_rank(question_vector, plainto_tsquery(?)) AS rank
 		FROM questions 
 		WHERE user_id = ? AND question_vector @@ plainto_tsquery(?)
-		ORDER BY ts_rank(question_vector, plainto_tsquery(?)) DESC
+		ORDER BY ts_rank(question_vector, plainto_tsquery(?)) DESC, id DESC
 		LIMIT ?`
 		rows = tx.Raw(sql, keyword, userId, keyword, keyword, fetchPerPage+1)
 	} else {
-		sql = `SELECT id, user_id, slug, topic, question, ts_rank(question_vector, plainto_tsquery(?)) AS rank
+		fmt.Println(cursor, *rank)
+		sql = `SELECT id, user_id, slug, topic, question, url_key, ts_rank(question_vector, plainto_tsquery(?)) AS rank
 		FROM questions 
-		WHERE user_id = ? AND question_vector @@ plainto_tsquery(?) AND ts_rank(question_vector, plainto_tsquery(?)) <= ?
-		ORDER BY ts_rank(question_vector, plainto_tsquery(?)) DESC
+		WHERE user_id = ? AND question_vector @@ plainto_tsquery(?) AND (ts_rank(question_vector, plainto_tsquery(?)), id) <= (?, ?)
+		ORDER BY ts_rank(question_vector, plainto_tsquery(?)) DESC, id DESC
 		LIMIT ?`
-		rows = tx.Raw(sql, keyword, userId, keyword, keyword, rank, keyword, fetchPerPage+1)
+		rows = tx.Raw(sql, keyword, userId, keyword, keyword, *rank, cursor, keyword, fetchPerPage+1)
 	}
 
 	if err := rows.Scan(&questions).Error; err != nil {
@@ -139,20 +140,16 @@ func (repository *QuestionRepository) SearchQuestionsByKeyword(tx *gorm.DB, user
 	return questions, nil
 }
 
-func (repository *QuestionRepository) FindPrevRankQuestion(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) (*float64, error) {
-	var prevDatas []float64
+func (repository *QuestionRepository) FindPrevRankCursorQuestion(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64, cursor *uuid.UUID) (*domain.Question, error) {
+	var prevDatas []domain.Question
 
-	if rank == nil {
-		return nil, nil
-	}
-
-	sql := `SELECT ts_rank(question_vector, plainto_tsquery(?)) AS rank
+	sql := `SELECT id, ts_rank(question_vector, plainto_tsquery(?)) AS rank
 	FROM questions
-	WHERE user_id = ? AND ts_rank(question_vector, plainto_tsquery(?)) > ?
-	ORDER BY ts_rank(question_vector, plainto_tsquery(?)) ASC
+	WHERE user_id = ? AND (ts_rank(question_vector, plainto_tsquery(?)), id) > (?, ?)
+	ORDER BY ts_rank(question_vector, plainto_tsquery(?)) ASC, id ASC 
 	LIMIT ?`
 
-	rows := tx.Raw(sql, keyword, userId, keyword, rank, keyword, fetchPerPage)
+	rows := tx.Raw(sql, keyword, userId, keyword, *rank, cursor, keyword, fetchPerPage)
 
 	if err := rows.Scan(&prevDatas).Error; err != nil {
 		return nil, err
@@ -161,6 +158,8 @@ func (repository *QuestionRepository) FindPrevRankQuestion(tx *gorm.DB, userId u
 	if len(prevDatas) == 0 {
 		return nil, nil
 	}
+
+	fmt.Println("prevDatas", prevDatas)
 
 	return &prevDatas[len(prevDatas)-1], nil
 }

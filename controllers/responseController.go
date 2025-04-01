@@ -59,9 +59,10 @@ func (controller *ResponseController) SearchResponsesByKeyword(ctx *gin.Context)
 	questionId := uuid.MustParse(ctx.Param("questionId"))
 	keyword := ctx.Query("keyword")
 	rankQuery := ctx.Query("rank")
+	cursorQuery := ctx.Query("cursor")
 
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, accessToken, keyword, rankQuery)
+	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, accessToken, keyword, rankQuery, cursorQuery)
 
 	if len(ctx.Errors) > 0 || answerResponse == nil {
 		return

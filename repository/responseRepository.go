@@ -76,7 +76,7 @@ func (repository *ResponseRepository) FindPrevCursorResponse(tx *gorm.DB, questi
 	return &prevDatas[len(prevDatas)-1], nil
 }
 
-func (repository *ResponseRepository) SearchResponsesByKeyword(tx *gorm.DB, questionId uuid.UUID, fetchPerPage int, keyword string, rank *float64) ([]domain.Response, error) {
+func (repository *ResponseRepository) SearchResponsesByKeyword(tx *gorm.DB, questionId uuid.UUID, fetchPerPage int, keyword string, rank *float64, cursor *uuid.UUID) ([]domain.Response, error) {
 	responses := []domain.Response{}
 	var sql string
 	var rows *gorm.DB
@@ -85,16 +85,16 @@ func (repository *ResponseRepository) SearchResponsesByKeyword(tx *gorm.DB, ques
 		sql = `SELECT id, question_id, response, created_at, ts_rank(response_vector, plainto_tsquery(?)) AS rank
 		FROM responses 
 		WHERE question_id = ? AND response_vector @@ plainto_tsquery(?)
-		ORDER BY ts_rank(response_vector, plainto_tsquery(?)) DESC
+		ORDER BY ts_rank(response_vector, plainto_tsquery(?)) DESC, id DESC
 		LIMIT ?`
 		rows = tx.Raw(sql, keyword, questionId, keyword, keyword, fetchPerPage+1)
 	} else {
 		sql = `SELECT id, question_id, response, created_at, ts_rank(response_vector, plainto_tsquery(?)) AS rank
 		FROM responses 
-		WHERE question_id = ? AND response_vector @@ plainto_tsquery(?) AND ts_rank(response_vector, plainto_tsquery(?)) <= ?
-		ORDER BY ts_rank(response_vector, plainto_tsquery(?)) DESC
+		WHERE question_id = ? AND response_vector @@ plainto_tsquery(?) AND (ts_rank(response_vector, plainto_tsquery(?)), id) <= (?, ?)
+		ORDER BY ts_rank(response_vector, plainto_tsquery(?)) DESC, id DESC
 		LIMIT ?`
-		rows = tx.Raw(sql, keyword, questionId, keyword, keyword, rank, keyword, fetchPerPage+1)
+		rows = tx.Raw(sql, keyword, questionId, keyword, keyword, rank, cursor, keyword, fetchPerPage+1)
 	}
 
 	if err := rows.Scan(&responses).Error; err != nil {
@@ -104,20 +104,20 @@ func (repository *ResponseRepository) SearchResponsesByKeyword(tx *gorm.DB, ques
 	return responses, nil
 }
 
-func (repository *ResponseRepository) FindPrevRankResponse(tx *gorm.DB, questionId uuid.UUID, fetchPerPage int, keyword string, rank *float64) (*float64, error) {
-	var prevDatas []float64
+func (repository *ResponseRepository) FindPrevRankResponse(tx *gorm.DB, questionId uuid.UUID, fetchPerPage int, keyword string, rank *float64, cursor *uuid.UUID) (*domain.Response, error) {
+	var prevDatas []domain.Response
 
 	if rank == nil {
 		return nil, nil
 	}
 
-	sql := `SELECT ts_rank(response_vector, plainto_tsquery(?)) AS rank
+	sql := `SELECT id, ts_rank(response_vector, plainto_tsquery(?)) AS rank
 	FROM responses
-	WHERE question_id = ? AND ts_rank(response_vector, plainto_tsquery(?)) > ?
-	ORDER BY ts_rank(response_vector, plainto_tsquery(?)) ASC
+	WHERE question_id = ? AND (ts_rank(response_vector, plainto_tsquery(?)), id) > (?, ?)
+	ORDER BY ts_rank(response_vector, plainto_tsquery(?)) ASC, id ASC
 	LIMIT ?`
 
-	rows := tx.Raw(sql, keyword, questionId, keyword, rank, keyword, fetchPerPage)
+	rows := tx.Raw(sql, keyword, questionId, keyword, rank, cursor, keyword, fetchPerPage)
 
 	if err := rows.Scan(&prevDatas).Error; err != nil {
 		return nil, err

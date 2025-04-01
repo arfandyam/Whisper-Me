@@ -1,9 +1,6 @@
 package service
 
 import (
-	"net/http"
-	"os"
-	"strconv"
 	"github.com/arfandyam/Whisper-Me/libs/exceptions"
 	"github.com/arfandyam/Whisper-Me/libs/mapper"
 	"github.com/arfandyam/Whisper-Me/models/domain"
@@ -13,6 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"net/http"
+	"os"
+	"strconv"
 )
 
 type ResponseService struct {
@@ -134,7 +134,7 @@ func (service *ResponseService) FindResponseByQuestionId(ctx *gin.Context, quest
 	}
 }
 
-func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, accessToken string,keyword string, rankQuery string) *dto.SearchKeywordResponseByUserIdResponse {
+func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, questionId uuid.UUID, accessToken string, keyword string, rankQuery string, cursorUrl string) *dto.SearchKeywordResponseByUserIdResponse {
 	userId, err := service.QuestionRepository.FindQuestionOwner(service.DB, questionId)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusNotFound, "Failed to fetch user id", err.Error())
@@ -156,6 +156,18 @@ func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, quest
 		return nil
 	}
 
+	var cursor *uuid.UUID
+	if cursorUrl != "" {
+		parsedUUID, err := uuid.Parse(cursorUrl)
+		if err != nil {
+			err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to parse cursor", err.Error())
+			ctx.Error(err)
+			return nil
+		} else {
+			cursor = &parsedUUID
+		}
+	}
+
 	var rank *float64
 	if rankQuery != "" {
 		parsedRank, _ := strconv.ParseFloat(rankQuery, 64)
@@ -163,38 +175,55 @@ func (service *ResponseService) SearchResponsesByKeyword(ctx *gin.Context, quest
 	}
 
 	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
-	responses, err := service.ResponseRepository.SearchResponsesByKeyword(service.DB, questionId, fetchPerPage, keyword, rank)
+	responses, err := service.ResponseRepository.SearchResponsesByKeyword(service.DB, questionId, fetchPerPage, keyword, rank, cursor)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch responses/answers", err.Error())
 		ctx.Error(err)
 		return nil
 	}
-	prevRank, err := service.ResponseRepository.FindPrevRankResponse(service.DB, questionId, fetchPerPage, keyword, rank)
+	prevResponse, err := service.ResponseRepository.FindPrevRankResponse(service.DB, questionId, fetchPerPage, keyword, rank, cursor)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prev rank response/answer", err.Error())
 		ctx.Error(err)
 		return nil
 	}
 
-	var nextRank *float64
 	var responsesDTO []dto.ResponseDTO
+	var nextRank *float64
+	var nextCursor *uuid.UUID
 	if len(responses) <= fetchPerPage {
 		for i := 0; i < len(responses); i++ {
 			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToResponseDTO(responses[i]))
 		}
 		nextRank = nil
+		nextCursor = nil
 	} else {
 		for i := 0; i < fetchPerPage; i++ {
 			responsesDTO = append(responsesDTO, mapper.MapResponseDomainToResponseDTO(responses[i]))
 		}
 		nextRank = &responses[len(responses)-1].Rank
+		nextCursor = &responses[len(responses)-1].Id
 	}
 
-	return &dto.SearchKeywordResponseByUserIdResponse{
-		Data: responsesDTO,
-		Meta: dto.PageRankInfo{
-			NextRank: nextRank,
-			PrevRank: prevRank,
-		},
+	if prevResponse == nil {
+		return &dto.SearchKeywordResponseByUserIdResponse{
+			Data: responsesDTO,
+			Meta: dto.PageRankInfo{
+				NextCursor: nextCursor,
+				PrevCursor: nil,
+				NextRank:   nextRank,
+				PrevRank:   nil,
+			},
+		}
+	} else {
+		return &dto.SearchKeywordResponseByUserIdResponse{
+			Data: responsesDTO,
+			Meta: dto.PageRankInfo{
+				NextCursor: nextCursor,
+				PrevCursor: &prevResponse.Id,
+				NextRank:   nextRank,
+				PrevRank:   &prevResponse.Rank,
+			},
+		}
 	}
 }

@@ -18,6 +18,8 @@ type PageCursorInfo struct {
 }
 
 type PageRankInfo struct {
-	NextRank *float64 `json:"next_rank"`
-	PrevRank *float64 `json:"prev_rank"`
+	NextCursor *uuid.UUID `json:"next_cursor"`
+	PrevCursor *uuid.UUID `json:"prev_cursor"`
+	NextRank   *float64   `json:"next_rank"`
+	PrevRank   *float64   `json:"prev_rank"`
 }

@@ -13,8 +13,9 @@ type QuestionRepositoryInterface interface {
 	FindQuestionBySlug(tx *gorm.DB, questionSlug string) (*domain.Question, error)
 	FindQuestionsByUserId(tx *gorm.DB, userId uuid.UUID, cursor *uuid.UUID, fetchPerPage int) ([]domain.Question, error)
 	FindPrevCursorQuestion(tx *gorm.DB, userId uuid.UUID, cursor *uuid.UUID, fetchPerPage int) (*uuid.UUID, error)
-	SearchQuestionsByKeyword(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) ([]domain.Question, error)
-	FindPrevRankQuestion(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) (*float64, error)
+	SearchQuestionsByKeyword(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64, cursor *uuid.UUID) ([]domain.Question, error)
+	FindPrevRankCursorQuestion(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64, cursor *uuid.UUID) (*domain.Question, error)
+	// FindPrevRankCursorQuestion(tx *gorm.DB, userId uuid.UUID, fetchPerPage int, keyword string, rank *float64) (*float64, error)
 	FindQuestionOwner(tx *gorm.DB, questionId uuid.UUID) (*uuid.UUID, error)
 	FindQuestionSlugByUrlKey(tx *gorm.DB, urlKey string) (*string, error)
 }
