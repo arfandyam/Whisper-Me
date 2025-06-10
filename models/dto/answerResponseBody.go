@@ -9,31 +9,22 @@ type ResponseDTO struct {
 	Id         uuid.UUID `json:"id"`
 	QuestionId uuid.UUID `json:"question_id"`
 	Response   string    `json:"response"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
-type ResponseTimestampDTO struct {
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type FullResponseDTO struct {
-	ResponseDTO
-	ResponseTimestampDTO
-}
-
-type CreateEditAnswerResponse struct {
+type CreateAnswerResponse struct {
 	*Response
-	Data ResponseDTO
+	Data ResponseDTO `json:"data"`
 }
 
 type FindAnswerResponse struct {
 	*Response
-	Data []FullResponseDTO `json:"data"`
-	Meta PageCursorInfo      `json:"meta"`
+	Data []ResponseDTO  `json:"data"`
+	Meta PageCursorInfo `json:"meta"`
 }
 
 type SearchKeywordResponseByUserIdResponse struct {
 	*Response
-	Data []FullResponseDTO `json:"data"`
-	Meta PageRankInfo      `json:"meta"`
+	Data []ResponseDTO `json:"data"`
+	Meta PageRankInfo  `json:"meta"`
 }

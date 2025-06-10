@@ -93,14 +93,25 @@ func (service *AuthService) LoginUser(ctx *gin.Context, request *dto.AuthRequest
 	tx.Commit()
 
 	return &dto.AuthResponseBody{
-		AccessToken:    accessToken,
-		AccessTokenIat: *accessTokenIat,
-		AccessTokenExp: *accessTokenExp,
-		RefreshToken:   refreshToken,
+		Data: dto.AuthUserInfo{
+			Id:             user.Id,
+			Username:       user.Username,
+			Firstname:      user.Firstname,
+			Lastname:       user.Lastname,
+			Email:          user.Email,
+			Is_oauth:       user.Is_oauth,
+			Is_verified:    user.Is_verified,
+			AccessToken:    accessToken,
+			AccessTokenIat: *accessTokenIat,
+			AccessTokenExp: *accessTokenExp,
+			RefreshToken:   refreshToken,
+			RefreshTokenIat: *refreshTokenIat,
+			RefreshTokenExp: *refreshTokenExp,
+		},
 	}
 }
 
-func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.RefreshTokenRequestBody) *dto.AccessTokenResponseBody {
+func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.RefreshTokenRequestBody) *dto.UpdateAccessTokenResponseBody {
 	if err := ctx.ShouldBindBodyWithJSON(&request); err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Invalid Request Body", err.Error())
 		ctx.Error(err)
@@ -115,7 +126,7 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 
 	claimsId, err := service.TokenManager.VerifyToken(request.RefreshToken, os.Getenv("REFRESH_TOKEN_SECRET_KEY"))
 	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token is invalid.", err.Error())
 		ctx.Error(err)
 		return nil
 	}
@@ -125,15 +136,17 @@ func (service *AuthService) UpdateAccessToken(ctx *gin.Context, request *dto.Ref
 	accessTokenAge, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_AGE"))
 	accessToken, iat, exp, err := service.TokenManager.GenerateToken(userId, accessTokenAge, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Refresh token not found.", err.Error())
+		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to generate access token.", err.Error())
 		ctx.Error(err)
 		return nil
 	}
 
-	return &dto.AccessTokenResponseBody{
-		AccessToken:    accessToken,
-		AccessTokenIat: *iat,
-		AccessTokenExp: *exp,
+	return &dto.UpdateAccessTokenResponseBody{
+		Data: dto.AccessTokenResponseBody{
+			AccessToken:    accessToken,
+			AccessTokenIat: *iat,
+			AccessTokenExp: *exp,
+		},
 	}
 }
 
@@ -158,7 +171,7 @@ func (service *AuthService) LogoutUser(ctx *gin.Context, request *dto.RefreshTok
 		ctx.Error(err)
 		return
 	}
-	
+
 	tx.Commit()
 }
 
@@ -231,9 +244,16 @@ func (service *AuthService) OauthLoginUser(ctx *gin.Context, request *dto.UserCr
 	tx.Commit()
 
 	return &dto.AuthResponseBody{
-		AccessToken:    accessToken,
-		AccessTokenIat: *accessTokenIat,
-		AccessTokenExp: *accessTokenExp,
-		RefreshToken:   refreshToken,
+		Data: dto.AuthUserInfo{
+			Id:             user.Id,
+			Username:       user.Username,
+			Firstname:      user.Firstname,
+			Lastname:       user.Lastname,
+			Email:          user.Email,
+			AccessToken:    accessToken,
+			AccessTokenIat: *accessTokenIat,
+			AccessTokenExp: *accessTokenExp,
+			RefreshToken:   refreshToken,
+		},
 	}
 }

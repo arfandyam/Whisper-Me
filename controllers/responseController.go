@@ -20,8 +20,9 @@ func NewResponseController(responseService service.ResponseServiceInterface) Res
 }
 
 func (controller *ResponseController) CreateResponse(ctx *gin.Context){
-	request := &dto.CreateEditAnswerRequestBody{}
-	answerResponse := controller.ResponseService.CreateResponse(ctx, request)
+	questionId := uuid.Must(uuid.Parse(ctx.Param("questionId")))
+	request := &dto.CreateAnswerRequestBody{}
+	answerResponse := controller.ResponseService.CreateResponse(ctx, request, questionId)
 
 	if len(ctx.Errors) > 0 {
 		return
@@ -58,9 +59,10 @@ func (controller *ResponseController) SearchResponsesByKeyword(ctx *gin.Context)
 	questionId := uuid.MustParse(ctx.Param("questionId"))
 	keyword := ctx.Query("keyword")
 	rankQuery := ctx.Query("rank")
+	cursorQuery := ctx.Query("cursor")
 
 	accessToken := strings.Split(ctx.GetHeader("Authorization"), " ")[1]
-	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, accessToken, keyword, rankQuery)
+	answerResponse := controller.ResponseService.SearchResponsesByKeyword(ctx, questionId, accessToken, keyword, rankQuery, cursorQuery)
 
 	if len(ctx.Errors) > 0 || answerResponse == nil {
 		return

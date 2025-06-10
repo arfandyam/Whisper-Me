@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -61,6 +62,7 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 		Slug:     slug,
 		Topic:    request.Topic,
 		Question: request.Question,
+		UrlKey:   libs.SlugToBase62(slug),
 	}
 
 	tx := service.DB.Begin()
@@ -81,11 +83,13 @@ func (service *QuestionService) CreateQuestion(ctx *gin.Context, accessToken str
 	tx.Commit()
 
 	return &dto.CreateEditQuestionResponse{
-		Id:       question.Id,
-		UserId:   question.UserId,
-		Slug:     question.Slug,
-		Topic:    question.Topic,
-		Question: question.Question,
+		Data: dto.QuestionDTO{
+			Id:       question.Id,
+			UserId:   question.UserId,
+			Slug:     question.Slug,
+			Topic:    question.Topic,
+			Question: question.Question,
+		},
 	}
 }
 
@@ -137,10 +141,15 @@ func (service *QuestionService) EditQuestion(ctx *gin.Context, accessToken strin
 	tx.Commit()
 
 	return &dto.CreateEditQuestionResponse{
-		Id:       question.Id,
-		Slug:     question.Slug,
-		Topic:    question.Topic,
-		Question: question.Question,
+		Data: dto.QuestionDTO{
+			Id:        question.Id,
+			UserId:    question.UserId,
+			Slug:      question.Slug,
+			Topic:     question.Topic,
+			Question:  question.Question,
+			UrlKey:    question.UrlKey,
+			CreatedAt: question.CreatedAt,
+		},
 	}
 }
 
@@ -160,11 +169,36 @@ func (service *QuestionService) FindQuestionById(ctx *gin.Context, accessToken s
 	}
 
 	return &dto.FindQuestionResponse{
-		Id:       question.Id,
-		UserId:   question.UserId,
-		Slug:     question.Slug,
-		Topic:    question.Topic,
-		Question: question.Question,
+		Data: dto.QuestionDTO{
+			Id:        question.Id,
+			UserId:    question.UserId,
+			Slug:      question.Slug,
+			Topic:     question.Topic,
+			Question:  question.Question,
+			UrlKey:    question.UrlKey,
+			CreatedAt: question.CreatedAt,
+		},
+	}
+}
+
+func (service *QuestionService) FindQuestionBySlug(ctx *gin.Context, slug string) *dto.FindQuestionResponse {
+	question, err := service.QuestionRepository.FindQuestionBySlug(service.DB, slug)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "failed to fetch data", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	return &dto.FindQuestionResponse{
+		Data: dto.QuestionDTO{
+			Id:        question.Id,
+			UserId:    question.UserId,
+			Slug:      question.Slug,
+			Topic:     question.Topic,
+			Question:  question.Question,
+			UrlKey:    question.UrlKey,
+			CreatedAt: question.CreatedAt,
+		},
 	}
 }
 
@@ -218,7 +252,7 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	}
-	
+
 	return &dto.FindQuestionsByUserIdResponse{
 		Data: questionsDTO,
 		Meta: dto.PageCursorInfo{
@@ -228,7 +262,7 @@ func (service *QuestionService) FindQuestionsByUserId(ctx *gin.Context, accessTo
 	}
 }
 
-func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, keyword string, rankQuery string) *dto.SearchKeywordQuestionsByUserIdResponse {
+func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, accessToken string, keyword string, rankQuery string, cursorUrl string) *dto.SearchKeywordQuestionsByUserIdResponse {
 	claimsId, err := service.TokenManager.VerifyToken(accessToken, os.Getenv("ACCESS_TOKEN_SECRET_KEY"))
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "invalid access token", err.Error())
@@ -244,41 +278,88 @@ func (service *QuestionService) SearchQuestionsByKeyword(ctx *gin.Context, acces
 		rank = &parsedRank
 	}
 
+	var cursor *uuid.UUID
+	if cursorUrl != "" {
+		parsedUUID, err := uuid.Parse(cursorUrl)
+		if err != nil {
+			err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to parse cursor", err.Error())
+			ctx.Error(err)
+			return nil
+		} else {
+			cursor = &parsedUUID
+		}
+	}
+
 	fetchPerPage, _ := strconv.Atoi(os.Getenv("FETCH_PER_PAGE"))
 
-	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(service.DB, userId, fetchPerPage, keyword, rank)
+	questions, err := service.QuestionRepository.SearchQuestionsByKeyword(service.DB, userId, fetchPerPage, keyword, rank, cursor)
 	if err != nil {
 		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch questions", err.Error())
 		ctx.Error(err)
 		return nil
 	}
 
-	prevRank, err := service.QuestionRepository.FindPrevRankQuestion(service.DB, userId, fetchPerPage, keyword, rank)
-	if err != nil {
-		err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prev rank", err.Error())
-		ctx.Error(err)
-		return nil
+	fmt.Println("questions", questions)
+
+	var prevQuestion *domain.Question
+	if cursor != nil || rank != nil {
+		prevQuestion, err = service.QuestionRepository.FindPrevRankCursorQuestion(service.DB, userId, fetchPerPage, keyword, rank, cursor)
+		if err != nil {
+			err := exceptions.NewCustomError(http.StatusBadRequest, "Failed to fetch prev rank", err.Error())
+			ctx.Error(err)
+			return nil
+		}
 	}
+
+	fmt.Println("prevQuestion", prevQuestion)
 
 	var questionsDTO []dto.QuestionDTO
 	var nextRank *float64
+	var nextCursor *uuid.UUID
 	if len(questions) <= fetchPerPage {
 		nextRank = nil
+		nextCursor = nil
 		for i := 0; i < len(questions); i++ {
 			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	} else {
 		nextRank = &questions[len(questions)-1].Rank
+		nextCursor = &questions[len(questions)-1].Id
 		for i := 0; i < fetchPerPage; i++ {
 			questionsDTO = append(questionsDTO, mapper.MapQuestionDomainToQuestionDTO(questions[i]))
 		}
 	}
 
-	return &dto.SearchKeywordQuestionsByUserIdResponse{
-		Data: questionsDTO,
-		Meta: dto.PageRankInfo{
-			NextRank: nextRank,
-			PrevRank: prevRank,
-		},
+	if prevQuestion == nil {
+		return &dto.SearchKeywordQuestionsByUserIdResponse{
+			Data: questionsDTO,
+			Meta: dto.PageRankInfo{
+				NextCursor: nextCursor,
+				PrevCursor: nil,
+				NextRank:   nextRank,
+				PrevRank:   nil,
+			},
+		}
+	} else {
+		return &dto.SearchKeywordQuestionsByUserIdResponse{
+			Data: questionsDTO,
+			Meta: dto.PageRankInfo{
+				NextCursor: nextCursor,
+				PrevCursor: &prevQuestion.Id,
+				NextRank:   nextRank,
+				PrevRank:   &prevQuestion.Rank,
+			},
+		}
 	}
+}
+
+func (service *QuestionService) FindQuestionSlugByUrlKey(ctx *gin.Context, urlKey string) *string {
+	slug, err := service.QuestionRepository.FindQuestionSlugByUrlKey(service.DB, urlKey)
+	if err != nil {
+		err := exceptions.NewCustomError(http.StatusBadRequest, "cannot find url key", err.Error())
+		ctx.Error(err)
+		return nil
+	}
+
+	return slug
 }

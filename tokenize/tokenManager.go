@@ -63,5 +63,5 @@ func (tokenManager *TokenManager) VerifyToken(tokenString string, secretKeyStrin
 		}
 	}
 
-	return "", fmt.Errorf("invalid access token")
+	return "", fmt.Errorf("invalid token")
 }

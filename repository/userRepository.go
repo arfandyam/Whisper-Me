@@ -92,9 +92,9 @@ func (repository *UserRepository) GetUserPassword(db *gorm.DB, userId uuid.UUID)
 func (repository *UserRepository) GetUserCredentials(tx *gorm.DB, username string) (*domain.User, error) {
 	fmt.Println("username", username)
 	user := domain.User{}
-	sql := "SELECT id, username, password FROM users WHERE username = ?"
+	sql := "SELECT id, username, firstname, lastname, email, is_oauth, is_verified, password FROM users WHERE username = ?"
 	rows := tx.Raw(sql, username).Row()
-	if err := rows.Scan(&user.Id, &user.Username, &user.Password); err != nil {
+	if err := rows.Scan(&user.Id, &user.Username, &user.Firstname, &user.Lastname, &user.Email, &user.Is_oauth, &user.Is_verified, &user.Password); err != nil {
 		return nil, err
 	}
 
