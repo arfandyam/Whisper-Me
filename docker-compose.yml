@@ -1,0 +1,60 @@
+services:
+  whisperme_be:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - 3000:3000
+    environment:
+      - PROTOCOL=${PROTOCOL}
+      - HOST=${HOST}
+      - PORT=${PORT}
+      - PGHOST=${PGHOST}
+      - PGPORT=${PGPORT}
+      - PGUSER=${PGUSER}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGNAME=${PGNAME}
+      - ACCESS_TOKEN_AGE=${ACCESS_TOKEN_AGE}
+      - REFRESH_TOKEN_AGE=${REFRESH_TOKEN_AGE}
+      - ACCESS_TOKEN_SECRET_KEY=${ACCESS_TOKEN_SECRET_KEY}
+      - REFRESH_TOKEN_SECRET_KEY=${REFRESH_TOKEN_SECRET_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - EMAIL_TOKEN_AGE=${EMAIL_TOKEN_AGE}
+      - EMAIL_TOKEN_SECRET_KEY=${EMAIL_TOKEN_SECRET_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FROM_EMAIL_PASSWORD=${FROM_EMAIL_PASSWORD}
+      - GOOGLE_EMAIL_SMTP=${GOOGLE_EMAIL_SMTP}
+      - SMTP_ADDR=${SMTP_ADDR}
+      - FETCH_PER_PAGE=${FETCH_PER_PAGE}
+      - FE_HOST=${FE_HOST}
+      - FE_PORT=${FE_PORT}
+    depends_on:
+      - postgresql
+  postgresql:
+    image: postgres:16.3-alpine
+    environment:
+      - POSTGRES_USER=${PGUSER}
+      - POSTGRES_PASSWORD=${PGPASSWORD}
+      - POSTGRES_DB=${PGNAME}
+    volumes:
+      - psql_data:/var/lib/postgres/data
+  whisperme_fe:
+    build:
+      context: ../whisper-me-frontend
+      dockerfile: Dockerfile.dev
+    ports: 
+      - 5173:5173
+    environment:
+      - VITE_BACKEND_PROTOCOL=${VITE_BACKEND_PROTOCOL}
+      - VITE_BACKEND_HOST=${VITE_BACKEND_HOST}
+      - VITE_BACKEND_PORT=${VITE_BACKEND_PORT}
+      - VITE_PROTOCOL=${VITE_PROTOCOL}
+      - VITE_HOST=${VITE_HOST}
+      - VITE_PORT=${VITE_PORT}
+    depends_on:
+      - whisperme_be
+      - postgresql
+
+volumes:
+  psql_data: {}

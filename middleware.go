@@ -30,7 +30,7 @@ func GlobalErrorHandler() gin.HandlerFunc {
 	}
 }
 
-func corsMiddleware() gin.HandlerFunc {
+func CorsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
